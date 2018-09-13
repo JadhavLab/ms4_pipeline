@@ -9,18 +9,30 @@ function out = ml_run_process(processName,inputs,outputs,params)
     
     inStr = ['-i ' makeKeyStr(inputs)];
     outStr = ['-o ' makeKeyStr(outputs)];
-    pStr = ['-p ' makeKeyStr(params)];
+    if exist('params','var')
+        pStr = ['-p ' makeKeyStr(params)];
+    else
+        pStr = '';
+    end
     runStr = [runStr ' ' inStr ' ' outStr ' ' pStr];
     disp(['Executing command: ' runStr])
-    [~,out] = system(runStr);
+    [errCode,out] = system(runStr,'-echo');
+    if errCode~=0
+        error('Something went wrong! Derp!\n%s',out)
+    end
+        
 
     function oStr = makeKeyStr(s)
         % makes string in key:value format from structure
         oStr = '';
         FNs = fieldnames(s);
-        for k=1:numel(s)
-            oStr = [oStr,FNs{k},':',s.(FNs{k})];
-            if k<numel(s)
+        for k=1:numel(FNs)
+            val = s.(FNs{k});
+            if isnumeric(val)
+                val = num2str(val);
+            end
+            oStr = [oStr,FNs{k},':',val];
+            if k<numel(FNs)
                 oStr = [oStr,' '];
             end
         end
