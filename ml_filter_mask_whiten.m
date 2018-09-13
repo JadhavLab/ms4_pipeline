@@ -11,7 +11,7 @@ function out = ml_filter_mask_whiten(resDir,varargin)
     %   mask_artifacts: 1 to mask artifacts (default = 1)
     %   tet_list    :  list of tetrodes to process. empty processes all tetrodes in results directory (default).
     %   threshold   : number of st. deviations away from the mean to consider as artifacts (default=5). Default from Frank Lab
-    %   chuck_size  : number of sample sets to zero if RSS is above threshold (default=2000). Default from Frank Lab
+    %   chunk_size  : number of sample sets to zero if RSS is above threshold (default=2000). Default from Frank Lab
 
     freq_min = 300;
     freq_max = 6000;
@@ -23,6 +23,9 @@ function out = ml_filter_mask_whiten(resDir,varargin)
 
     assignVars(varargin)
 
+    if resDir(end)==filesep
+        resDir = resDir(1:end-1);
+    end
     % Get tetrode list
     tetDirs = dir([resDir filesep '*.nt*']);
     tetDirs = {tetDirs.name};
@@ -44,8 +47,9 @@ function out = ml_filter_mask_whiten(resDir,varargin)
 
 
     defParams = struct('freq_min',freq_min,'freq_max',freq_max,'samplerate',samplerate);
+    out = cell(numel(tetDirs),1);
     for k=1:numel(tetDirs)
-        tD = tetDirs{k};
+        tD = [resDir filesep tetDirs{k}];
 
         % Set and overwrite default params with params.json if available
         samplerate = defParams.samplerate;
@@ -71,7 +75,7 @@ function out = ml_filter_mask_whiten(resDir,varargin)
         outFile.timeseries_out = [tD filesep 'filt.mda.prv'];
         filtParams = struct('samplerate',samplerate,'freq_min',freq_min,'freq_max',freq_max);
         console_out = ml_run_process(pName,inFile,outFile,filtParams);
-        disp(console_out)
+        %disp(console_out)
 
         % Mask Artifacts
         if mask_artifacts
@@ -80,7 +84,7 @@ function out = ml_filter_mask_whiten(resDir,varargin)
             outFile.timeseries_out = [tD filesep 'filt.mda.prv'];
             maskParams = struct('threshold',threshold,'chunk_size',chunk_size);
             console_out = ml_run_process(pName,inFile,outFile,maskParams);
-            disp(console_out)
+            %disp(console_out)
         end
 
         % Whiten
@@ -88,6 +92,7 @@ function out = ml_filter_mask_whiten(resDir,varargin)
         inFile.timeseries = [tD filesep 'filt.mda.prv'];
         outFile.timeseries_out = [tD filesep 'pre.mda.prv'];
         console_out = ml_run_process(pName,inFile,outFile);
-        disp(console_out)
+        %disp(console_out)
+        out{k} = outFile.timeseries_out;
     end
 

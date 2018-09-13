@@ -67,7 +67,7 @@ function out = mda_util(dayDirs,varargin)
             % create prv file
             srcFile = [mdaFiles(l).folder filesep mdaFiles(l).name];
             destFile = [tetResDir 'raw.mda.prv'];
-            create_prv(srcFile,destFile)
+            create_prv(srcFile,destFile);
        %     mkdir([dd filesep tetDir]);
        %     lnStr = sprintf('ln -s %s %s',[mdaFiles(l).folder filesep mdaFiles(l).name],[dd filesep tetDir filesep mdaFiles(l).name]);
        %     system(lnStr);

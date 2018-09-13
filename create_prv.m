@@ -10,4 +10,4 @@ function outStr = create_prv(srcFile,destFile,args)
     end
     conda_path = get_conda_path();
     runStr = sprintf('. %s;conda activate base;ml-prv-create %s %s %s',conda_path,srcFile,destFile,args);
-    [out,outStr] = system(runStr);
+    [out,outStr] = system(runStr,'-echo');
