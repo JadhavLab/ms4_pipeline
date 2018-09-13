@@ -9,7 +9,7 @@ function out = ml_run_process(processName,inputs,outputs,params)
     
     inStr = ['-i ' makeKeyStr(inputs)];
     outStr = ['-o ' makeKeyStr(outputs)];
-    if exist('params','var')
+    if exist('params','var') && ~isempty(params)
         pStr = ['-p ' makeKeyStr(params)];
     else
         pStr = '';
