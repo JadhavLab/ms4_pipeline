@@ -1,5 +1,5 @@
 #!/bin/bash
-cd Downloads
+cd ~/Downloads
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3.sh && \
 bash miniconda3.sh -bp ~/conda && \
 echo ". ~/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \

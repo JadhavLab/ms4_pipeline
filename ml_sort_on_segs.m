@@ -43,7 +43,7 @@ function out = ml_sort_on_segs(tetResDir,varargin)
         params = jsondecode(paramTxt);
         sortParams = setParams(sortParams,params);
         metParams = setParams(metParams,params);
-        curParams = setParams(labelParams,params);
+        curParams = setParams(curParams,params);
     end
 
     % Sort entire file at once
@@ -67,17 +67,19 @@ function out = ml_sort_on_segs(tetResDir,varargin)
     console_out = ml_run_process(pName,metInputs,metOutputs,metParams);
 
     % Add Curation Tags (9/13 RN: no idea what this actually is, gonna test it out)
-    pName = 'ms4alg.create_label_map';
-    curInputs = struct('metrics',metOutputs.metrics_out);
-    curOutputs = struct('label_map_out',[tetResDir filesep 'label_map.mda.prv']);
-    console_out = ml_run_process(pName,curInputs,curOutputs,curParams);
-     
-    pName = 'ms4alg.apply_label_map';
-    appInputs = struct('firings',sortOutputs.firings_out,'label_map',curOutputs.label_map_out);
-    appOutputs = struct('firings_out',[tetResDir filesep 'firings_curated.mda']);
-    console_out = ml_run_process(pName,appInputs,appOutputs);
+    % error in curation_spec.py.mp so skipping curation for now (9/13/18 RN)
+    %pName = 'ms4alg.create_label_map';
+    %curInputs = struct('metrics',metOutputs.metrics_out);
+    %curOutputs = struct('label_map_out',[tetResDir filesep 'label_map.mda.prv']);
+    %console_out = ml_run_process(pName,curInputs,curOutputs,curParams);
+    % 
+    %pName = 'ms4alg.apply_label_map';
+    %appInputs = struct('firings',sortOutputs.firings_out,'label_map',curOutputs.label_map_out);
+    %appOutputs = struct('firings_out',[tetResDir filesep 'firings_curated.mda']);
+    %console_out = ml_run_process(pName,appInputs,appOutputs);
 
-    out = {sortOutputs.firings_out;metOutputs.metrics_out;appOutputs.firings_out};
+    %out = {sortOutputs.firings_out;metOutputs.metrics_out;appOutputs.firings_out};
+    out = {sortOutputs.firings_out;metOutputs.metrics_out};
 
 function newParams = setParams(old,new)
     FNs = fieldnames(old);
