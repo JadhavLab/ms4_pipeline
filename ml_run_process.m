@@ -5,7 +5,7 @@ function out = ml_run_process(processName,inputs,outputs,params)
     % params is likewise
 
     conda_path = get_conda_path();
-    runStr = ['. ' conda_path ';conda activate base;ml-run-process ' processName ' '];
+    runStr = ['. ' conda_path ' && conda activate base && ml-run-process ' processName ' '];
     
     inStr = ['-i ' makeKeyStr(inputs)];
     outStr = ['-o ' makeKeyStr(outputs)];

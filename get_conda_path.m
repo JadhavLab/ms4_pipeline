@@ -3,3 +3,4 @@ function out = get_conda_path()
     % your matlab path
 
     out = fileread('conda_path.txt');
+    out = strtrim(out);
