@@ -3,7 +3,7 @@ function out = mkTree(outDir)
     % recursively make dirs so that the target folder is created
 
     if ~exist(fileparts(outDir),'dir')
-        mkTree(fileparts(outDir))
+        mkTree(fileparts(outDir));
     end
     out = 0;
     if ~exist(outDir,'dir')
