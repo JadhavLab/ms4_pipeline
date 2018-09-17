@@ -12,6 +12,7 @@ function ml_process_animal(animID,rawDir,varargin)
     %   sessionNums : array of days to process. default = [] processes all days in rawDir
     %   tet_list    : array of tetrodes to cluster. default = [] processes all tetrodes available
     %   keep_intermediates  : whether to keep the intermediate mda files corresponding to pre.mda.prv and filt.mda.prv, the intermediate files are stored on the local disk in the mountainlab tmp folder (defualt=0)
+    %   mask_artifacts      : flag whether to mask artifacts before whitening. default = 1, but the function errors rarely on some tetrodes (no idea why yet) so you can choose not to do this process
 
     if rawDir(end)==filesep
         rawDir = rawDir(1:end-1);
@@ -20,6 +21,7 @@ function ml_process_animal(animID,rawDir,varargin)
     sessionNums = [];
     tet_list = [];
     keep_intermediates = 0;
+    mask_artifacts = 1;
 
     assignVars(varargin)
 
@@ -72,7 +74,7 @@ function ml_process_animal(animID,rawDir,varargin)
         fprintf('\n\nBeginning analysis of %s\nDate: %s\n\nBandpass Filtering, Masking out artifacts and Whitening...\n',rD,datestr(datetime('Now'))); 
         
         % filter mask and whiten
-        out = ml_filter_mask_whiten(rD);
+        out = ml_filter_mask_whiten(rD,'mask_artifacts',mask_artifacts);
         % returns path to pre.mda.prv file
 
         fprintf('\n\nPreprocessing of data done. Written to local machine with prv link @ %s\n',out)
