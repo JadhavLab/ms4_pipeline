@@ -7,6 +7,13 @@ function ml_process_animal(animID,rawDir,varargin)
     % and that the mda directory inside the day dirs is labelled
     % animID_day_date.mda or animID_day_date_epoch.mda (the latter will only
     % happen if you have 1 epoch), [e.g. RW9_02_1808224.mda]
+    % This function will create a MountainSort directory in the direct folder.
+    % Inside that directories will be .mountain directories for each day with
+    % subdirectories for the sorting data for each tetrode. Logs will be
+    % created in each tetrode directory, and finally tetrode information will
+    % be combined into a spikes mat-file in FilterFramework format for each
+    % day. To avoid overwriting existing clustering, the spikes file will the
+    % saved in the .mountain folder for each day.
     % NAME-VALUE Pairs:
     %   dataDir     : path to direct folder for animal. default = rawDir/../animID_direct
     %   sessionNums : array of days to process. default = [] processes all days in rawDir
@@ -66,6 +73,8 @@ function ml_process_animal(animID,rawDir,varargin)
 
     % Run mda_util, returns list of tetrode results directories
     resDirs = mda_util(dayDirs,'tet_list',tet_list,'dataDir',dataDir);
+    dayResDirs = cell(numel(dayDirs),1);
+    dayIdx = 1;
 
     % For each day and tet sort spikes
     for k=1:numel(resDirs)
@@ -87,8 +96,6 @@ function ml_process_animal(animID,rawDir,varargin)
         %fprintf('\n\nSorting done. outputs saved at:\n    %s\n    %s\n    %s\n',out2{1},out2{2},out2{3})
         fprintf('\n\nSorting done. outputs saved at:\n    %s\n    %s\n',out2{1},out2{2})
 
-        %TODO: Convert to FF matlab file
-
         % Delete intermediate files
         if ~keep_intermediates
             tmpDir = '/tmp/mountainlab-tmp/';
@@ -98,7 +105,33 @@ function ml_process_animal(animID,rawDir,varargin)
 
         diary off
 
+        % check if container results folders is already in dayResDirs and add if not
+        if rD(end)==filesep
+            rD = rD(1:end-1);
+        end
+        dD = fileparts(rD);
+        if ~any(strcmpi(dayResDirs,dD))
+            dayResDirs{dayIdx} = dD;
+            dayIdx = dayIdx+1;
+        end
     end
+    fprintf('Completed automated clustering!\nCreating FilterFramework formatted spikes files...\n')
+    
+    for k=1:numel(dayResDirs)
+        dD = dayResDirs{k};
+        fprintf('Creating spikes file for %s...\n',dD);
+        [remainder,dirName] = fileparts(dD);
+        if isempty(dirName)
+            [~,dirName] = fileparts(remainder);
+        end
+        pat = '\w*_(?<day>[0-9]+)_\w*';
+        parsed = regexp(dirName,pat,'names');
+        dayNum = str2double(parsed.day);
+        fprintf('Identified Day Number as %02i\n',dayNum);
+        spikesFile = convert_ml_to_FF(animID,dD,dayNum);
+        fprintf('Done! Created %s\n\n',spikesFile)
+    end
+
 
 
 
