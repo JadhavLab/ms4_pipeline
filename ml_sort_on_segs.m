@@ -27,6 +27,7 @@ function out = ml_sort_on_segs(tetResDir,varargin)
     isolation_thresh = [];
     noise_overlap_thresh = [];
     peak_snr_thresh = [];
+    firings_out = [tetResDir filesep 'firings_raw.mda'];
 
     assignVars(varargin)
 
@@ -51,7 +52,7 @@ function out = ml_sort_on_segs(tetResDir,varargin)
     % Sort 
     pName = 'ms4alg.sort';
     sortInputs.timeseries = [tetResDir filesep 'pre.mda.prv'];
-    sortOutputs.firings_out = [tetResDir filesep 'firings_raw.mda'];
+    sortOutputs.firings_out = firings_out;
     if ~isempty(geom)
         sortInputs.geom = geom;
     end

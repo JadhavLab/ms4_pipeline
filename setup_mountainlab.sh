@@ -9,7 +9,7 @@ conda config --set max_shlvl 1 && \
 conda install -c flatiron -c conda-forge mountainlab mountainlab_pytools && \
 touch ~/conda/etc/mountainlab/mountainlab.env
 ml-config
-conda install -c flatiron -c conda-forge ml_ephys ml_ms4alg && \
+conda install -c flatiron -c conda-forge ml_ephys ml_ms4alg qt-mountainview && \
 if [ -x "$(command -v lolcat)" ] && [ -x "$(command -v figlet)" ]; then
     echo 'mountainlab setup complete' | figlet | lolcat
     echo 'add ~/conda/lib/node_modules/mountainlab/utilities/matlab/mdaio/ to matlab path' | lolcat
