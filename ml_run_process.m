@@ -5,7 +5,7 @@ function out = ml_run_process(processName,inputs,outputs,params)
     % params is likewise
 
     conda_path = get_conda_path();
-    runStr = ['. ' conda_path ' && conda activate base && ml-run-process ' processName ' '];
+    runStr = ['. ' conda_path ' && conda activate mlab && ml-run-process ' processName ' '];
     
     inStr = ['-i ' makeKeyStr(inputs)];
     outStr = ['-o ' makeKeyStr(outputs)];
@@ -28,12 +28,25 @@ function out = ml_run_process(processName,inputs,outputs,params)
         FNs = fieldnames(s);
         for k=1:numel(FNs)
             val = s.(FNs{k});
-            if isnumeric(val)
-                val = num2str(val);
-            end
-            oStr = [oStr,FNs{k},':',val];
-            if k<numel(FNs)
-                oStr = [oStr,' '];
+            if iscell(val)
+                for l=1:numel(val)
+                    tmpV = val{l};
+                    if isnumeric(tmpV)
+                        tmpV = num2str(tmpV);
+                    end
+                    oStr = [oStr FNs{k},':',tmpV];
+                    if l<numel(val)
+                        oStr = [oStr ' '];
+                    end
+                end
+            else
+                if isnumeric(val)
+                    val = num2str(val);
+                end
+                oStr = [oStr,FNs{k},':',val];
+                if k<numel(FNs)
+                    oStr = [oStr,' '];
+                end
             end
         end
 

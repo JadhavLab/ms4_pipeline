@@ -9,7 +9,8 @@ conda config --set max_shlvl 1 && \
 conda install -c flatiron -c conda-forge mountainlab mountainlab_pytools && \
 touch ~/conda/etc/mountainlab/mountainlab.env
 ml-config
-conda install -c flatiron -c conda-forge ml_ephys ml_ms4alg qt-mountainview && \
+echo 'set ML_TEMPORARY_DIRECTORY in ~/conda/etc/mountainlab/mountainlab.env to be on the same drive as the data for ease of processing and space management' 
+conda install -c flatiron -c conda-forge ml_ephys ml_ms4alg qt-mountainview ml_ms3 ml_pyms && \
 if [ -x "$(command -v lolcat)" ] && [ -x "$(command -v figlet)" ]; then
     echo 'mountainlab setup complete' | figlet | lolcat
     echo 'add ~/conda/lib/node_modules/mountainlab/utilities/matlab/mdaio/ to matlab path' | lolcat

@@ -29,4 +29,13 @@ Setup
     * [Drift Tracking](https://bitbucket.org/franklab/franklab_msdrift/src/master/)
     * These should be cloned into `~/.mountainlab/packages/`
 
+* Create configuration file for mountainlab
+    * `touch ~/conda/env/mlab/etc/mountainlab/mountainlab.env`
+    * Now you can set the temporary directory path to be on the same drive as your data
+    * Also add the `~/.mountainlab/packages/` to the mountainlab package search path
+    * Just modify and add these lines to the `mountainlab.env` file you created:
+        * `ML_TEMPORARY_DIRECTORY='/path/to/data/drive/tmp/mountainlab-tmp'`
+        * `ML_ADDITIONAL_PACKAGE_SEARCH_DIRECTORIES='~/.mountainlab/packages'`
 
+### Updates 9-23-18
+The franklab msdrift and mstaggedcuration packages will throw errors as is due to changes in package locations in the new mountainlab-js. So instead copy the `franklab_mstaggedcuration` and `franklab_msdrift` folder from this repository into `~/.mountainlab/packages/`. 

@@ -12,7 +12,7 @@ function out = ml_filter_mask_whiten(tetResDir,varargin)
     %   threshold   : number of st. deviations away from the mean to consider as artifacts (default=5). Default from Frank Lab
     %   chunk_size  : number of sample sets to zero if RSS is above threshold (default=2000). Default from Frank Lab
 
-    freq_min = 300;
+    freq_min = 600; % best for CA1
     freq_max = 6000;
     mask_artifacts = 1;
     samplerate = 30000;
@@ -38,21 +38,22 @@ function out = ml_filter_mask_whiten(tetResDir,varargin)
     % Bandpass filter
     pName = 'ephys.bandpass_filter';
     inFile.timeseries = [tetResDir filesep 'raw.mda.prv'];
-    outFile.timeseries_out = [tetResDir filesep 'filt.mda.prv'];
+    outFile.timeseries_out = [tetResDir filesep 'filt.mda'];
     console_out = ml_run_process(pName,inFile,outFile,filtParams);
 
     % Mask Artifacts
+    % TODO: Use a try-catch to catch mask errors and move on properly
     if mask_artifacts
         pName = 'ephys.mask_out_artifacts';
-        inFile.timeseries = [tetResDir filesep 'filt.mda.prv'];
-        outFile.timeseries_out = [tetResDir filesep 'filt.mda.prv'];
+        inFile.timeseries = [tetResDir filesep 'filt.mda'];
+        outFile.timeseries_out = [tetResDir filesep 'filt.mda'];
         console_out = ml_run_process(pName,inFile,outFile,maskParams);
     end
 
     % Whiten
     pName = 'ephys.whiten';
-    inFile.timeseries = [tetResDir filesep 'filt.mda.prv'];
-    outFile.timeseries_out = [tetResDir filesep 'pre.mda.prv'];
+    inFile.timeseries = [tetResDir filesep 'filt.mda'];
+    outFile.timeseries_out = [tetResDir filesep 'pre.mda'];
     console_out = ml_run_process(pName,inFile,outFile);
     out = outFile.timeseries_out;
 

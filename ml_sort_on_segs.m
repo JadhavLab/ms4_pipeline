@@ -16,70 +16,139 @@ function out = ml_sort_on_segs(tetResDir,varargin)
     %   peak_snr_thresh     : for curation, peak snr must be above this (default = 1.5)
     %   curation defaults are built into the ms4alg.create_label_map processor
 
+    if tetResDir(end)==filesep
+        tetResDir = tetResDir(1:end-1);
+    end
 
     geom = []; % optional csv defining electrode geometry (not needed for tetrodes)
     adjacency_radius = -1; % use all channels are one neighborhood (for tetrodes)
-    detect_sign=1; % sign of spikes to detect
+    detect_sign=1; % sign of spikes to detect, Trodes 1.7+ automatically inverts sign on extraction so sign is +1
     detect_threshold = 3; % detection threshold for spike in st. dev from mean
     samplerate = 30000;
-    % Curation parameters
-    firing_rate_thresh = [];
-    isolation_thresh = [];
-    noise_overlap_thresh = [];
-    peak_snr_thresh = [];
+    
+    % Curation parameters (from FrankLab)
+    firing_rate_thresh = 0.01;
+    isolation_thresh = 0.95;
+    noise_overlap_thresh = 0.03;
+    peak_snr_thresh = 1.5;
+
+    % Automatic Filenames
     firings_out = [tetResDir filesep 'firings_raw.mda'];
+    timeseries = [tetResDir filesep 'pre.mda'];
+    if ~exist(timeseries,'file')
+        timeseries = [tetResDir filesep 'pre.mda.prv'];
+    end
+    param_file = [tetResDir filesep 'params.json'];
+    time_file = dir([fileparts(tetResDir) filesep '*timestamps*']);
+    time_file = [time_file.folder filesep time_file.name];
+    metrics_out = [tetResDir filesep 'metrics_raw.json'];
+    delete_temporary = 1;
+
+    % Epoch detection parameters
+    epoch_offsets = [];
+    min_epoch_gap = 1; % seconds
+
 
     assignVars(varargin)
 
-    % TODO: Use timeseries.mda from day directory to determine epoch offsets
-    % TODO: Split into epoch segments using pyms
-    % TODO: Sort each segment
-    % TODO: Anneal Segments
-    
+    % Set parameters for sorting, metrics, and curation. Replace any parameters with contents of params.json
     sortParams = struct('adjacency_radius',adjacency_radius,'detect_sign',detect_sign,'detect_threshold',detect_threshold);
-    metParams = struct('samplerate',samplerate);
+    metParams = struct('samplerate',samplerate,'compute_bursting_parents','true');
     curParams = struct('firing_rate_thresh',firing_rate_thresh,'isolation_thresh',isolation_thresh,'noise_overlap_thresh',noise_overlap_thresh,'peak_snr_thresh',peak_snr_thresh);
-    if exist([tetResDir filesep 'params.json'],'file')
-        paramTxt = fileread([tetResDir filesep 'params.json']);
+    if exist(param_file,'file')
+        paramTxt = fileread(param_file);
         params = jsondecode(paramTxt);
         sortParams = setParams(sortParams,params);
         metParams = setParams(metParams,params);
         curParams = setParams(curParams,params);
     end
 
-    % Sort entire file at once
-
-    % Sort 
-    pName = 'ms4alg.sort';
-    sortInputs.timeseries = [tetResDir filesep 'pre.mda.prv'];
-    sortOutputs.firings_out = firings_out;
-    if ~isempty(geom)
-        sortInputs.geom = geom;
+    % Determine epoch offsets (in samples) from timestamps.mda using gaps
+    % larger than min_epoch_gap to separate epochs. Skip this is user provides
+    % epoch offsets list (epoch_offsets)
+    if isempty(epoch_offsets)
+        timeDat = readmda(time_file);
+        gaps = diff(timeDat);
+        epoch_end = find(gaps>=min_epoch_gap*metParams.samplerate);
+        epoch_offsets = [0 epoch_end];
+        total_samples = numel(timeDat);
+    else
+        total_samples = numel(readmda(time_file));
     end
-    console_out = ml_run_process(pName,sortInputs,sortOutputs,sortParams);
-    % output file have array NxL where the rows are
-    % channels_used,timestamp,cluster_labels and L is num data points
+
+
+    % Split into epoch segments and sort
+    epoch_timeseries = cell(numel(epoch_offsets),1);
+    epoch_firings = cell(numel(epoch_offsets),1);
+    for k=1:numel(epoch_offsets)
+        
+        % Extract epoch timeseries
+        t1 =  epoch_offsets(k);
+        if k==numel(epoch_offsets)
+            t2 = total_samples-1;
+        else
+            t2 = epoch_offsets(k+1)-1;
+        end
+        tmp_timeseries = sprintf('%s%spre-%02i.mda',tetResDir,filesep,k);
+        extractInputs.timeseries = timeseries;
+        extractOutputs.timeseries_out = tmp_timeseries;
+        extractParams = struct('t1',t1,'t2',t2);
+        ml_run_process('pyms.extract_timeseries',extractInputs,extractOutputs,extractParams);
+        epoch_timeseries{k} = tmp_timeseries;
+
+        % Sort epoch segment
+        tmp_firings = sprintf('%s%sfirings-%02i.mda',tetResDir,filesep,k);
+        sortInputs.timeseries = tmp_timeseries;
+        if ~isempty(geom)
+            sortInputs.geom = geom;
+        end
+        sortOutputs.firings_out = tmp_firings;
+        ml_run_process('ms4alg.sort',sortInputs,sortOutputs,sortParams);
+        epoch_firings{k} = tmp_firings;
+    end
+
+    % anneal segments
+    annealInputs.timeseries_list = epoch_timeseries;
+    annealInputs.firings_list = epoch_firings;
+    annealOutputs.firings_out = firings_out;
+    offsetStr = sprintf('%i,',epoch_offsets);
+    offsetStr = offsetStr(1:end-1);
+    annealParams.time_offsets = offsetStr;
+    % useless outputs, but required for process to run (errors if left empty)
+    annealOutputs.dmatrix_out = [tetResDir filesep 'trash_dmatrix.mda'];
+    annealOutputs.dmatrix_templates_out = [tetResDir filesep 'trash_dmatrix_templates.mda'];
+    annealOutputs.k1_dmatrix_out = [tetResDir filesep 'trash_k1_dmatrix.mda'];
+    annealOutputs.k2_dmatrix_out = [tetResDir filesep 'trash_k2_dmatrix.mda'];
+    ml_run_process('pyms.anneal_segments',annealInputs,annealOutputs,annealParams);
+    % delete temporary distance matrices
+    if delete_temporary
+        delete([tetResDir filesep 'trash*'])
+    end
+
+    % delete epoch segment files
+    for k=1:numel(epoch_offsets)
+        delete(epoch_timeseries{k})
+        delete(epoch_firings{k})
+    end
+    % firings output file has array NxL where the rows are
+    % channel_detected_on,timestamp,cluster_labels and L is num data points
 
     % Compute cluster metrics
-    pName = 'ephys.compute_cluster_metrics';
+    pName = 'ms3.isolation_metrics';
     metInputs.firings = sortOutputs.firings_out;
     metInputs.timeseries = sortInputs.timeseries;
-    metOutputs.metrics_out = [tetResDir filesep 'metrics_raw.json'];
-    console_out = ml_run_process(pName,metInputs,metOutputs,metParams);
+    metOutputs.metrics_out = metrics_out;
+    ml_run_process(pName,metInputs,metOutputs,metParams);
 
-    % Add Curation Tags (9/13 RN: no idea what this actually is, gonna test it out)
-    % error in curation_spec.py.mp so skipping curation for now (9/13/18 RN)
-    %pName = 'ms4alg.create_label_map';
-    %curInputs = struct('metrics',metOutputs.metrics_out);
-    %curOutputs = struct('label_map_out',[tetResDir filesep 'label_map.mda.prv']);
-    %console_out = ml_run_process(pName,curInputs,curOutputs,curParams);
-    % 
-    %pName = 'ms4alg.apply_label_map';
-    %appInputs = struct('firings',sortOutputs.firings_out,'label_map',curOutputs.label_map_out);
-    %appOutputs = struct('firings_out',[tetResDir filesep 'firings_curated.mda']);
-    %console_out = ml_run_process(pName,appInputs,appOutputs);
+    % Add Curation Tags 
+    % error in ms4alg.create_label_map: curation_spec.py.mp so skipping curation for now (9/13/18 RN)
+    % Now using franklab's pyms.add_curation_tags
+    pName = 'pyms.add_curation_tags';
+    curInputs = struct('metrics',metrics_out);
+    curOutputs = struct('metrics_tagged',metrics_out);
+    ml_run_process(pName,curInputs,curOutputs,curParams);
+     
 
-    %out = {sortOutputs.firings_out;metOutputs.metrics_out;appOutputs.firings_out};
     out = {sortOutputs.firings_out;metOutputs.metrics_out};
 
 function newParams = setParams(old,new)
