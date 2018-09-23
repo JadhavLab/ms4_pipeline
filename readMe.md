@@ -6,11 +6,11 @@ Repository for Jadhav Lab code for the use of MountainSort-JS
 Setup
 ------
 1. Download and install miniconda
-```bash
-wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3.sh && \
-bash miniconda3.sh -bp ~/conda && \
-echo ". ~/conda/etc/profile.d/conda.sh" >> ~/.bashrc
-```
+..```bash
+..wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3.sh && \
+..bash miniconda3.sh -bp ~/conda && \
+..echo ". ~/conda/etc/profile.d/conda.sh" >> ~/.bashrc
+..```
 2. Setup a conda environment and install mountainlab and all processors
 ```bash
 conda create --name mlab
