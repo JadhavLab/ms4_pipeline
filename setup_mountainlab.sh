@@ -1,16 +1,27 @@
 #!/bin/bash
-cd ~/Downloads
-wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3.sh && \
-bash miniconda3.sh -bp ~/conda && \
-echo ". ~/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
-conda activate base && \
+if ! [ -x "S(command -v conda)" ]; then
+    cd ~/Downloads
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3.sh && \
+    bash miniconda3.sh -bp ~/conda && \
+    echo ". ~/conda/etc/profile.d/conda.sh" >> ~/.bashrc
+fi
+echo "Setting mlab conda environment..."
+conda create --name mlab && \
+conda activate mlab && \
 conda update conda && \
 conda config --set max_shlvl 1 && \
-conda install -c flatiron -c conda-forge mountainlab mountainlab_pytools && \
-touch ~/conda/etc/mountainlab/mountainlab.env
+echo "Installing mountainlab, qt-mountainview and associated processors..."  && \
+conda install -c flatiron -c conda-forge mountainlab mountainlab_pytools ml_ephys ml_pyms ml_ms3 ml_ms4alg qt-mountainview && \
+echo "Setting up mountainlab environment..." && \
+local mountainENV=~/conda/env/mlab/etc/mountainlab/mountainlab.env 
+touch $mountainENV && \
+echo "ML_ADDITIONAL_PACKAGE_SEARCH_DIRECTORIES='~/.mountainlab/packages'" >> $mountainENV &&  \
 ml-config
-echo 'set ML_TEMPORARY_DIRECTORY in ~/conda/etc/mountainlab/mountainlab.env to be on the same drive as the data for ease of processing and space management' 
-conda install -c flatiron -c conda-forge ml_ephys ml_ms4alg qt-mountainview ml_ms3 ml_pyms && \
+echo "Creating symlinks in ~/.mountainlab/packages to franklab_msdrift and franklab_mstaggedcuration"
+mkdir ~/.mountainlab/packages
+ln -s franklab_msdrift ~/.mountainlab/packages/franklab_msdrift
+ls -s franklab_mstaggedcuration ~/.mountainlab/packages/franklab_mstaggedcuration
+echo "set ML_TEMPORARY_DIRECTORY in $mountainENV to be on the same drive as the data for ease of processing and space management" 
 if [ -x "$(command -v lolcat)" ] && [ -x "$(command -v figlet)" ]; then
     echo 'mountainlab setup complete' | figlet | lolcat
     echo 'add ~/conda/lib/node_modules/mountainlab/utilities/matlab/mdaio/ to matlab path' | lolcat
