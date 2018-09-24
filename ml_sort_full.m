@@ -33,14 +33,20 @@ function out = ml_sort_full(tetResDir,varargin)
 
     assignVars(varargin)
 
+    % Set parameters for sorting, metrics, and curation. Replace any parameters with contents of params.json
     sortParams = struct('adjacency_radius',adjacency_radius,'detect_sign',detect_sign,'detect_threshold',detect_threshold);
     metParams = struct('samplerate',samplerate);
+    isoParams = struct('compute_bursting_parents','true');
     curParams = struct('firing_rate_thresh',firing_rate_thresh,'isolation_thresh',isolation_thresh,'noise_overlap_thresh',noise_overlap_thresh,'peak_snr_thresh',peak_snr_thresh);
-    if exist([tetResDir filesep 'params.json'],'file')
-        paramTxt = fileread([tetResDir filesep 'params.json']);
+    if exist(param_file,'file')
+        paramTxt = fileread(param_file);
         params = jsondecode(paramTxt);
+        if isfield(params,'samplerate')
+            samplerate = params.samplerate;
+        end
         sortParams = setParams(sortParams,params);
         metParams = setParams(metParams,params);
+        isoParams = setParams(isoParams,params);
         curParams = setParams(curParams,params);
     end
 
@@ -58,11 +64,15 @@ function out = ml_sort_full(tetResDir,varargin)
     % channels_used,timestamp,cluster_labels and L is num data points
 
     % Compute cluster metrics
-    pName = 'ms3.isolation_metrics';
-    metInputs.firings = sortOutputs.firings_out;
-    metInputs.timeseries = sortInputs.timeseries;
-    metOutputs.metrics_out = metrics_out;
-    ml_run_process(pName,metInputs,metOutputs,metParams);
+    metInputs.firings = firings_out;
+    metInputs.timeseries = timeseries;
+    metOutputs.cluster_metrics_out = [tetResDir filesep 'trash_metrics1.json'];
+    isoOutputs.metrics_out = [tetResDir filesep 'trash_metrics2.json'];
+    ml_run_process('ms3.cluster_metrics',metInputs,metOutputs,metParams);
+    ml_run_process('ms3.isolation_metrics',metInputs,isoOutputs,isoParams);
+    combineInput.metrics_list = {metOutputs.cluster_metrics_out;isoOutputs.metrics_out};
+    combineOutput.metrics_out = metrics_out;
+    ml_run_process('ms3.combine_cluster_metrics',combineInput,combineOutput)
 
     % Add Curation Tags 
     % error in ms4alg.create_label_map: curation_spec.py.mp so skipping curation for now (9/13/18 RN)

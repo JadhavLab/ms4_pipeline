@@ -35,7 +35,7 @@ function out = ml_run_process(processName,inputs,outputs,params)
                         tmpV = num2str(tmpV);
                     end
                     oStr = [oStr FNs{k},':',tmpV];
-                    if l<numel(val)
+                    if l<numel(val) || k<numel(FNs)
                         oStr = [oStr ' '];
                     end
                 end

@@ -25,7 +25,7 @@ function out = ml_sort_on_segs(tetResDir,varargin)
     detect_sign=1; % sign of spikes to detect, Trodes 1.7+ automatically inverts sign on extraction so sign is +1
     detect_threshold = 3; % detection threshold for spike in st. dev from mean
     samplerate = 30000;
-    
+
     % Curation parameters (from FrankLab)
     firing_rate_thresh = 0.01;
     isolation_thresh = 0.95;
@@ -53,13 +53,18 @@ function out = ml_sort_on_segs(tetResDir,varargin)
 
     % Set parameters for sorting, metrics, and curation. Replace any parameters with contents of params.json
     sortParams = struct('adjacency_radius',adjacency_radius,'detect_sign',detect_sign,'detect_threshold',detect_threshold);
-    metParams = struct('samplerate',samplerate,'compute_bursting_parents','true');
+    metParams = struct('samplerate',samplerate);
+    isoParams = struct('compute_bursting_parents','true');
     curParams = struct('firing_rate_thresh',firing_rate_thresh,'isolation_thresh',isolation_thresh,'noise_overlap_thresh',noise_overlap_thresh,'peak_snr_thresh',peak_snr_thresh);
     if exist(param_file,'file')
         paramTxt = fileread(param_file);
         params = jsondecode(paramTxt);
+        if isfield(params,'samplerate')
+            samplerate = params.samplerate;
+        end
         sortParams = setParams(sortParams,params);
         metParams = setParams(metParams,params);
+        isoParams = setParams(isoParams,params);
         curParams = setParams(curParams,params);
     end
 
@@ -69,7 +74,7 @@ function out = ml_sort_on_segs(tetResDir,varargin)
     if isempty(epoch_offsets)
         timeDat = readmda(time_file);
         gaps = diff(timeDat);
-        epoch_end = find(gaps>=min_epoch_gap*metParams.samplerate);
+        epoch_end = find(gaps>=min_epoch_gap*samplerate);
         epoch_offsets = [0 epoch_end];
         total_samples = numel(timeDat);
     else
@@ -81,7 +86,7 @@ function out = ml_sort_on_segs(tetResDir,varargin)
     epoch_timeseries = cell(numel(epoch_offsets),1);
     epoch_firings = cell(numel(epoch_offsets),1);
     for k=1:numel(epoch_offsets)
-        
+
         % Extract epoch timeseries
         t1 =  epoch_offsets(k);
         if k==numel(epoch_offsets)
@@ -120,6 +125,31 @@ function out = ml_sort_on_segs(tetResDir,varargin)
     annealOutputs.k1_dmatrix_out = [tetResDir filesep 'trash_k1_dmatrix.mda'];
     annealOutputs.k2_dmatrix_out = [tetResDir filesep 'trash_k2_dmatrix.mda'];
     ml_run_process('pyms.anneal_segments',annealInputs,annealOutputs,annealParams);
+    % firings output file has array NxL where the rows are
+    % channel_detected_on,timestamp,cluster_labels and L is num data points
+
+    % Compute cluster metrics
+    metInputs.firings = firings_out;
+    metInputs.timeseries = timeseries;
+    metOutputs.cluster_metrics_out = [tetResDir filesep 'trash_metrics1.json'];
+    isoOutputs.metrics_out = [tetResDir filesep 'trash_metrics2.json'];
+    ml_run_process('ms3.cluster_metrics',metInputs,metOutputs,metParams);
+    ml_run_process('ms3.isolation_metrics',metInputs,isoOutputs,isoParams);
+    combineInput.metrics_list = {metOutputs.cluster_metrics_out;isoOutputs.metrics_out};
+    combineOutput.metrics_out = metrics_out;
+    ml_run_process('ms3.combine_cluster_metrics',combineInput,combineOutput)
+
+    % Add Curation Tags 
+    % error in ms4alg.create_label_map: curation_spec.py.mp so skipping curation for now (9/13/18 RN)
+    % Now using franklab's pyms.add_curation_tags
+    pName = 'pyms.add_curation_tags';
+    curInputs = struct('metrics',metrics_out);
+    curOutputs = struct('metrics_tagged',[tetResDir filesep 'metrics_tagged.json']);
+    ml_run_process(pName,curInputs,curOutputs,curParams);
+
+
+    out = {firings_out;metrics_out};
+
     % delete temporary distance matrices
     if delete_temporary
         delete([tetResDir filesep 'trash*'])
@@ -130,26 +160,6 @@ function out = ml_sort_on_segs(tetResDir,varargin)
         delete(epoch_timeseries{k})
         delete(epoch_firings{k})
     end
-    % firings output file has array NxL where the rows are
-    % channel_detected_on,timestamp,cluster_labels and L is num data points
-
-    % Compute cluster metrics
-    pName = 'ms3.isolation_metrics';
-    metInputs.firings = sortOutputs.firings_out;
-    metInputs.timeseries = sortInputs.timeseries;
-    metOutputs.metrics_out = metrics_out;
-    ml_run_process(pName,metInputs,metOutputs,metParams);
-
-    % Add Curation Tags 
-    % error in ms4alg.create_label_map: curation_spec.py.mp so skipping curation for now (9/13/18 RN)
-    % Now using franklab's pyms.add_curation_tags
-    pName = 'pyms.add_curation_tags';
-    curInputs = struct('metrics',metrics_out);
-    curOutputs = struct('metrics_tagged',metrics_out);
-    ml_run_process(pName,curInputs,curOutputs,curParams);
-     
-
-    out = {sortOutputs.firings_out;metOutputs.metrics_out};
 
 function newParams = setParams(old,new)
     FNs = fieldnames(old);
