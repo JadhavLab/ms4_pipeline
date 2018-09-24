@@ -3,6 +3,9 @@ Mountainlab-JS for JadhavLab
 
 Repository for Jadhav Lab code for the use of MountainSort-JS
 
+TODO: convert franklab script to convert mountainsort output to FF files (spikes & cellinfo)
+TODO: launcher script to simplify qt-mountainview launch
+
 Automatic Setup (9-24-18)
 ------
 * Clone this repo
@@ -82,4 +85,3 @@ qt-mountainview
 * cd into the tetrode directory you want to view
 * launch qt-mountainview
     `qt-mountainview --raw=raw.mda.prv --filt=filt.mda --pre=pre.mda --firings=firings_raw.mda --cluster_metrics=metrics_tagged.json --samplerate=30000`
-
