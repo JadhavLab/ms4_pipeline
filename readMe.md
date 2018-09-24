@@ -76,3 +76,10 @@ Usage
 * You can manually run each step and customize parameters (i.e. filtering band, thresholds, etc) using ml_filt_mask_whiten and ml_sort_on_segs which take the tetrode results directory as the input (animID_direct/MountainSort/day_folder.mountain/tetrode_folder)
     * read the help for each function to figure out how to customize variables in the function call
 * additionally, all parameters  can be overriden using the params.json file inside the tetrode results directory by including fields in json format.
+
+qt-mountainview
+------
+* cd into the tetrode directory you want to view
+* launch qt-mountainview
+    `qt-mountainview --raw=raw.mda.prv --filt=filt.mda --pre=pre.mda --firings=firings_raw.mda --cluster_metrics=metrics_tagged.json --samplerate=30000`
+
