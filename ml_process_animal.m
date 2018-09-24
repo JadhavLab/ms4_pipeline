@@ -75,32 +75,36 @@ function ml_process_animal(animID,rawDir,varargin)
     resDirs = mda_util(dayDirs,'tet_list',tet_list,'dataDir',dataDir);
     dayResDirs = cell(numel(dayDirs),1);
     dayIdx = 1;
+    maskErrors = zeros(numel(resDirs),1);
 
     % For each day and tet sort spikes
     for k=1:numel(resDirs)
         rD = resDirs{k};
         diary([rD filesep 'ml_sorting.log'])
-        fprintf('\n\nBeginning analysis of %s\nDate: %s\n\nBandpass Filtering, Masking out artifacts and Whitening...\n',rD,datestr(datetime('Now'))); 
+        fprintf('\n\n------\nBeginning analysis of %s\nDate: %s\n\nBandpass Filtering, Masking out artifacts and Whitening...\n------\n',rD,datestr(datetime('Now'))); 
         
         % filter mask and whiten
-        out = ml_filter_mask_whiten(rD,'mask_artifacts',mask_artifacts);
+        [out,maskErrors(k)] = ml_filter_mask_whiten(rD,'mask_artifacts',mask_artifacts);
         % returns path to pre.mda.prv file
 
-        fprintf('\n\nPreprocessing of data done. Written to local machine with prv link @ %s\n',out)
+        fprintf('\n\n------\nPreprocessing of data done. Written to %s\n------\n',out)
 
-        fprintf('Beginning Sorting and curation...\n')
+        fprintf('\n------\nBeginning Sorting and curation...\n------\n')
 
         % Sort and curate
         out2 = ml_sort_on_segs(rD);
         % returns paths to firings_raw.mda, metrics_raw.json and firings_curated.mda
         %fprintf('\n\nSorting done. outputs saved at:\n    %s\n    %s\n    %s\n',out2{1},out2{2},out2{3})
-        fprintf('\n\nSorting done. outputs saved at:\n    %s\n    %s\n',out2{1},out2{2})
+        fprintf('\n\n------\nSorting done. outputs saved at:\n    %s\n    %s\n------\n',out2{1},out2{2})
 
         % Delete intermediate files
-        if ~keep_intermediates
-            tmpDir = '/tmp/mountainlab-tmp/';
-            disp('Removing intermediate processing mda files...')
-            delete([tmpDir '*.mda'])
+        %if ~keep_intermediates
+        %    tmpDir = '/tmp/mountainlab-tmp/';
+        %    disp('Removing intermediate processing mda files...')
+        %    delete([tmpDir '*.mda'])
+        %end
+        if maskErrors(k)
+            fprintf('\n######\nMasking error for this day. Masking Artifacts skipped. Spikes may be noisy\n######\n')
         end
 
         diary off
@@ -115,22 +119,23 @@ function ml_process_animal(animID,rawDir,varargin)
             dayIdx = dayIdx+1;
         end
     end
-    fprintf('Completed automated clustering!\nCreating FilterFramework formatted spikes files...\n')
+    fprintf('Completed automated clustering!\n')
     
-    for k=1:numel(dayResDirs)
-        dD = dayResDirs{k};
-        fprintf('Creating spikes file for %s...\n',dD);
-        [remainder,dirName] = fileparts(dD);
-        if isempty(dirName)
-            [~,dirName] = fileparts(remainder);
-        end
-        pat = '\w*_(?<day>[0-9]+)_\w*';
-        parsed = regexp(dirName,pat,'names');
-        dayNum = str2double(parsed.day);
-        fprintf('Identified Day Number as %02i\n',dayNum);
-        spikesFile = convert_ml_to_FF(animID,dD,dayNum);
-        fprintf('Done! Created %s\n\n',spikesFile)
-    end
+    %% Converting firings to spikes FF shoould be done after manual cluster verification with qt-mountainview
+    %for k=1:numel(dayResDirs)
+    %    dD = dayResDirs{k};
+    %    fprintf('Creating spikes file for %s...\n',dD);
+    %    [remainder,dirName] = fileparts(dD);
+    %    if isempty(dirName)
+    %        [~,dirName] = fileparts(remainder);
+    %    end
+    %    pat = '\w*_(?<day>[0-9]+)_\w*';
+    %    parsed = regexp(dirName,pat,'names');
+    %    dayNum = str2double(parsed.day);
+    %    fprintf('Identified Day Number as %02i\n',dayNum);
+    %    spikesFile = convert_ml_to_FF(animID,dD,dayNum);
+    %    fprintf('Done! Created %s\n\n',spikesFile)
+    %end
 
 
 

@@ -15,6 +15,8 @@ function out = ml_sort_on_segs(tetResDir,varargin)
     %   noise_overlap_thresh: for curation, noise overlap must be below this (default = 0.03)
     %   peak_snr_thresh     : for curation, peak snr must be above this (default = 1.5)
     %   curation defaults are built into the ms4alg.create_label_map processor
+    %   TODO: Cut into separate functions. Add overwrite flags and log/progress
+    %   ouput. Update help txt
 
     if tetResDir(end)==filesep
         tetResDir = tetResDir(1:end-1);
@@ -51,6 +53,11 @@ function out = ml_sort_on_segs(tetResDir,varargin)
 
     assignVars(varargin)
 
+    if isempty(geom)
+        geomStr = '';
+    else
+        geomStr = geom;
+    end
     % Set parameters for sorting, metrics, and curation. Replace any parameters with contents of params.json
     sortParams = struct('adjacency_radius',adjacency_radius,'detect_sign',detect_sign,'detect_threshold',detect_threshold);
     metParams = struct('samplerate',samplerate);
@@ -81,6 +88,7 @@ function out = ml_sort_on_segs(tetResDir,varargin)
         total_samples = numel(readmda(time_file));
     end
 
+    fprintf('\n------\nProcessing %s\nDetected %i epochs. Extracting and Sorting\n------\n',tetResDir,numel(epoch_offsets));
 
     % Split into epoch segments and sort
     if numel(epoch_offsets)>1
@@ -95,6 +103,7 @@ function out = ml_sort_on_segs(tetResDir,varargin)
             else
                 t2 = epoch_offsets(k+1)-1;
             end
+            fprintf('\n------\nExtracting epoch %i/%i. Time: %0.2f s - %0.2f s\n------\n',k,numel(epoch_offsets),t1/samplerate,t2/samplerate);
             tmp_timeseries = sprintf('%s%spre-%02i.mda',tetResDir,filesep,k);
             extractInputs.timeseries = timeseries;
             extractOutputs.timeseries_out = tmp_timeseries;
@@ -103,6 +112,7 @@ function out = ml_sort_on_segs(tetResDir,varargin)
             epoch_timeseries{k} = tmp_timeseries;
 
             % Sort epoch segment
+            fprintf('\n------\nSorting epoch %i/%i. Paramters:\n\tadjacency_radius:%g\n\tdetect_sign:%i\n\tdetect_threshold:%g\n\tsamplerate:%g\n\tgeom: %s\n------\n',k,numel(epoch_offsets),adjacency_radius,detect_sign,detect_threshold,samplerate,geomStr);
             tmp_firings = sprintf('%s%sfirings-%02i.mda',tetResDir,filesep,k);
             sortInputs.timeseries = tmp_timeseries;
             if ~isempty(geom)
@@ -114,6 +124,7 @@ function out = ml_sort_on_segs(tetResDir,varargin)
         end
 
         % anneal segments
+        fprintf('\n------\nAnnealing Segments\n------\n')
         annealInputs.timeseries_list = epoch_timeseries;
         annealInputs.firings_list = epoch_firings;
         annealOutputs.firings_out = firings_out;
@@ -128,14 +139,19 @@ function out = ml_sort_on_segs(tetResDir,varargin)
         ml_run_process('pyms.anneal_segments',annealInputs,annealOutputs,annealParams);
     else 
         % if only 1 epoch
+        fprintf('\n------\nSorting epoch. Paramters:\n\tadjacency_radius:%g\n\tdetect_sign:%i\n\tdetect_threshold:%g\n\tsamplerate:%g\n\tgeom: %s\n------\n',adjacency_radius,detect_sign,detect_threshold,samplerate,geomStr);
         sortInputs.timeseries = timeseries;
         sortOutputs.firings_out = firings_out;
+        if ~isempty(geom)
+            sortInputs.geom=geom;
+        end
         ml_run_process('ms4alg.sort',sortInputs,sortOutputs,sortParams);
     end
     % firings output file has array NxL where the rows are
     % channel_detected_on,timestamp,cluster_labels and L is num data points
 
     % Compute cluster metrics
+    fprintf('\n------\nComputing Cluster and Isolation Metrics\n------\n')
     metInputs.firings = firings_out;
     metInputs.timeseries = timeseries;
     metOutputs.cluster_metrics_out = [tetResDir filesep 'trash_metrics1.json'];
@@ -149,6 +165,7 @@ function out = ml_sort_on_segs(tetResDir,varargin)
     % Add Curation Tags 
     % error in ms4alg.create_label_map: curation_spec.py.mp so skipping curation for now (9/13/18 RN)
     % Now using franklab's pyms.add_curation_tags
+    fprintf('\n------\nAdding curation tags. Curation Parameters:\n\tfiring_rate_thresh: %f\n\tisolation_thresh\n\t %f\n\tnoise_overlap_thresh: %f\n\tpeak_snr_thresh: %f\n------\n',firing_rate_thresh,isolation_thresh,noise_overlap_thresh,peak_snr_thresh);
     pName = 'pyms.add_curation_tags';
     curInputs = struct('metrics',metrics_out);
     curOutputs = struct('metrics_tagged',[tetResDir filesep 'metrics_tagged.json']);
@@ -159,13 +176,17 @@ function out = ml_sort_on_segs(tetResDir,varargin)
 
     % delete temporary distance matrices
     if delete_temporary
+        fprintf('\n------\nDeleting Extraneous Outputs: temporary metrics and anneal distance matrices\n------\n')
         delete([tetResDir filesep 'trash*'])
     end
 
     % delete epoch segment files
-    for k=1:numel(epoch_offsets)
-        delete(epoch_timeseries{k})
-        delete(epoch_firings{k})
+    if numel(epoch_offsets)>1
+        fprintf('\n------\nDeleting temporary segment mda file\n----\n')
+        for k=1:numel(epoch_offsets)
+            delete(epoch_timeseries{k})
+            delete(epoch_firings{k})
+        end
     end
 
 function newParams = setParams(old,new)

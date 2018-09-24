@@ -1,4 +1,4 @@
-function out = ml_filter_mask_whiten(tetResDir,varargin)
+function [out,maskingError] = ml_filter_mask_whiten(tetResDir,varargin)
     % outFile = ml_filter_mask_whiten(tetResDir,varargin) where tetResDir is the nt#.mountain
     % folder to be processed in the animal direct folder. should contain
     % raw.mda.prv and (optional) params.json
@@ -21,6 +21,8 @@ function out = ml_filter_mask_whiten(tetResDir,varargin)
 
     assignVars(varargin)
 
+    maskingError = 0;
+
     if tetResDir(end)==filesep
         tetResDir = tetResDir(1:end-1);
     end
@@ -36,21 +38,31 @@ function out = ml_filter_mask_whiten(tetResDir,varargin)
     end
 
     % Bandpass filter
+    fprintf('\n------\nFiltering, Maksing and Whitening for  %s\n\nBandpass Filtering. Parameters:\n\tfreq_min: %g\n\tfreq_max: %g\n\tsamplerate: %g\n------\n',tetResDir,freq_min,freq_max,samplerate)
     pName = 'ephys.bandpass_filter';
     inFile.timeseries = [tetResDir filesep 'raw.mda.prv'];
     outFile.timeseries_out = [tetResDir filesep 'filt.mda'];
     console_out = ml_run_process(pName,inFile,outFile,filtParams);
 
     % Mask Artifacts
-    % TODO: Use a try-catch to catch mask errors and move on properly
     if mask_artifacts
-        pName = 'ephys.mask_out_artifacts';
-        inFile.timeseries = [tetResDir filesep 'filt.mda'];
-        outFile.timeseries_out = [tetResDir filesep 'filt.mda'];
-        console_out = ml_run_process(pName,inFile,outFile,maskParams);
+        try
+            fprintf('\n------\nMasking Artifacts. Parameters:\n\tthreshold: %g\n\tchunk_size: %i\n------\n',threshold,chunk_size);
+            pName = 'ephys.mask_out_artifacts';
+            inFile.timeseries = [tetResDir filesep 'filt.mda'];
+            outFile.timeseries_out = [tetResDir filesep 'filt_tmp.mda'];
+            console_out = ml_run_process(pName,inFile,outFile,maskParams);
+            delete(inFile.timeseries)
+            movefile(outFile.timeseries_out,inFile.timeseries)
+        catch ME
+            fprintf('\n------\nMasking error: %s\n\n Skipping Masking...\n------\n',ME.message)
+            maskingError = 1;
+        end
+
     end
 
     % Whiten
+    fprintf('\n------\nWhitening Signal\n------\n');
     pName = 'ephys.whiten';
     inFile.timeseries = [tetResDir filesep 'filt.mda'];
     outFile.timeseries_out = [tetResDir filesep 'pre.mda'];
