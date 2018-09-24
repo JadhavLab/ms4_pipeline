@@ -2,6 +2,7 @@
 
 if ! [ -x "S(command -v conda)" ]; then
     wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/Downloads/miniconda3.sh && \
+    sudo chmod 777 ~/Downloads/miniconda3.sh && \
     bash ~/Downloads/miniconda3.sh -bp ~/conda && \
     echo ". ~/conda/etc/profile.d/conda.sh" >> ~/.bashrc
 fi
@@ -14,7 +15,7 @@ echo "Installing mountainlab, qt-mountainview and associated processors..."  && 
 conda install -c flatiron -c conda-forge mountainlab mountainlab_pytools ml_ephys ml_pyms ml_ms3 ml_ms4alg qt-mountainview && \
 echo "Setting up mountainlab environment..." && \
 local mountainENV=~/conda/env/mlab/etc/mountainlab/mountainlab.env 
-touch $mountainENV && \
+touch $mountainENV
 echo "ML_ADDITIONAL_PACKAGE_SEARCH_DIRECTORIES='~/.mountainlab/packages'" >> $mountainENV &&  \
 ml-config
 echo "Creating symlinks in ~/.mountainlab/packages to franklab_msdrift and franklab_mstaggedcuration"
