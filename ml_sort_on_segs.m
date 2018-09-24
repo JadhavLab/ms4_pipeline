@@ -83,48 +83,55 @@ function out = ml_sort_on_segs(tetResDir,varargin)
 
 
     % Split into epoch segments and sort
-    epoch_timeseries = cell(numel(epoch_offsets),1);
-    epoch_firings = cell(numel(epoch_offsets),1);
-    for k=1:numel(epoch_offsets)
+    if numel(epoch_offsets)>1
+        epoch_timeseries = cell(numel(epoch_offsets),1);
+        epoch_firings = cell(numel(epoch_offsets),1);
+        for k=1:numel(epoch_offsets)
 
-        % Extract epoch timeseries
-        t1 =  epoch_offsets(k);
-        if k==numel(epoch_offsets)
-            t2 = total_samples-1;
-        else
-            t2 = epoch_offsets(k+1)-1;
-        end
-        tmp_timeseries = sprintf('%s%spre-%02i.mda',tetResDir,filesep,k);
-        extractInputs.timeseries = timeseries;
-        extractOutputs.timeseries_out = tmp_timeseries;
-        extractParams = struct('t1',t1,'t2',t2);
-        ml_run_process('pyms.extract_timeseries',extractInputs,extractOutputs,extractParams);
-        epoch_timeseries{k} = tmp_timeseries;
+            % Extract epoch timeseries
+            t1 =  epoch_offsets(k);
+            if k==numel(epoch_offsets)
+                t2 = total_samples-1;
+            else
+                t2 = epoch_offsets(k+1)-1;
+            end
+            tmp_timeseries = sprintf('%s%spre-%02i.mda',tetResDir,filesep,k);
+            extractInputs.timeseries = timeseries;
+            extractOutputs.timeseries_out = tmp_timeseries;
+            extractParams = struct('t1',t1,'t2',t2);
+            ml_run_process('pyms.extract_timeseries',extractInputs,extractOutputs,extractParams);
+            epoch_timeseries{k} = tmp_timeseries;
 
-        % Sort epoch segment
-        tmp_firings = sprintf('%s%sfirings-%02i.mda',tetResDir,filesep,k);
-        sortInputs.timeseries = tmp_timeseries;
-        if ~isempty(geom)
-            sortInputs.geom = geom;
+            % Sort epoch segment
+            tmp_firings = sprintf('%s%sfirings-%02i.mda',tetResDir,filesep,k);
+            sortInputs.timeseries = tmp_timeseries;
+            if ~isempty(geom)
+                sortInputs.geom = geom;
+            end
+            sortOutputs.firings_out = tmp_firings;
+            ml_run_process('ms4alg.sort',sortInputs,sortOutputs,sortParams);
+            epoch_firings{k} = tmp_firings;
         end
-        sortOutputs.firings_out = tmp_firings;
+
+        % anneal segments
+        annealInputs.timeseries_list = epoch_timeseries;
+        annealInputs.firings_list = epoch_firings;
+        annealOutputs.firings_out = firings_out;
+        offsetStr = sprintf('%i,',epoch_offsets);
+        offsetStr = offsetStr(1:end-1);
+        annealParams.time_offsets = offsetStr;
+        % useless outputs, but required for process to run (errors if left empty)
+        annealOutputs.dmatrix_out = [tetResDir filesep 'trash_dmatrix.mda'];
+        annealOutputs.dmatrix_templates_out = [tetResDir filesep 'trash_dmatrix_templates.mda'];
+        annealOutputs.k1_dmatrix_out = [tetResDir filesep 'trash_k1_dmatrix.mda'];
+        annealOutputs.k2_dmatrix_out = [tetResDir filesep 'trash_k2_dmatrix.mda'];
+        ml_run_process('pyms.anneal_segments',annealInputs,annealOutputs,annealParams);
+    else 
+        % if only 1 epoch
+        sortInputs.timeseries = timeseries;
+        sortOutputs.firings_out = firings_out;
         ml_run_process('ms4alg.sort',sortInputs,sortOutputs,sortParams);
-        epoch_firings{k} = tmp_firings;
     end
-
-    % anneal segments
-    annealInputs.timeseries_list = epoch_timeseries;
-    annealInputs.firings_list = epoch_firings;
-    annealOutputs.firings_out = firings_out;
-    offsetStr = sprintf('%i,',epoch_offsets);
-    offsetStr = offsetStr(1:end-1);
-    annealParams.time_offsets = offsetStr;
-    % useless outputs, but required for process to run (errors if left empty)
-    annealOutputs.dmatrix_out = [tetResDir filesep 'trash_dmatrix.mda'];
-    annealOutputs.dmatrix_templates_out = [tetResDir filesep 'trash_dmatrix_templates.mda'];
-    annealOutputs.k1_dmatrix_out = [tetResDir filesep 'trash_k1_dmatrix.mda'];
-    annealOutputs.k2_dmatrix_out = [tetResDir filesep 'trash_k2_dmatrix.mda'];
-    ml_run_process('pyms.anneal_segments',annealInputs,annealOutputs,annealParams);
     % firings output file has array NxL where the rows are
     % channel_detected_on,timestamp,cluster_labels and L is num data points
 
