@@ -1,8 +1,8 @@
 #!/bin/bash
+
 if ! [ -x "S(command -v conda)" ]; then
-    cd ~/Downloads
-    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3.sh && \
-    bash miniconda3.sh -bp ~/conda && \
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/Downloads/miniconda3.sh && \
+    bash ~/Downloads/miniconda3.sh -bp ~/conda && \
     echo ". ~/conda/etc/profile.d/conda.sh" >> ~/.bashrc
 fi
 echo "Setting mlab conda environment..."
