@@ -79,7 +79,7 @@ function out = mda_util(dayDirs,varargin)
         mkTree(resDir);
 
         mdaFiles = dir([mdaDir.folder filesep mdaDir.name filesep '*.mda']);
-        pat2 = '(?<anim>[A-Z]+[0-9]+)_(?<day>[0-9]{2})_(?<date>[0-9]+)_*(?<epoch>[0-9]*)(?<epoch_name>\w*).nt(?<tet>[0-9]+).mda';
+        pat2 = '\w*.nt(?<tet>[0-9]+).mda';
         for l=1:numel(mdaFiles)
             % if its the timestamps file, copy it to the resDir 
             if ~isempty(strfind(mdaFiles(l).name,'timestamps'))

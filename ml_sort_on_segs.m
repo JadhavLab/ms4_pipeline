@@ -10,13 +10,18 @@ function out = ml_sort_on_segs(tetResDir,varargin)
     %   adjacency_radius    : see ml-spec ephys.ms4alg -p (default = -1 for tetrodes)
     %   detect_sign     : sign of spikes to detect (default = 1)
     %   samplerate      : sampling rate of the data in Hz (default = 30000)
+    %   firings_out     : output filename for firings (default = 'tet/results/dir/firings_raw.mda')
+    %   param_file      : parameter json file to use (default = 'tet/results/dir/params.json')
+    %   time_file       : timestamps mda file for the day  (default = 'day/results/dir/animID_day_date.timestamps.mda')
+    %   metrics_out     : output filename for cluster & isolation metrics (defualt = 'tet/results/dir/metrics_raw.json')
+    %   tagged_metrics_out: output filename for curated cluster metrics (default = 'tet/res/dir/metrics_tagged.json')
+    %   delete_temporary: flag whether to delete temporary metrics (uncombined cluster and isolation metrics) and cluster distance matrices from drift tracking (default = 1)
     %   firing_rate_thresh  : for curation, firing rate must be above this (default = 0.05)
     %   isolation_thresh    : for curation, isolation value must be above this (default = 0.95)
     %   noise_overlap_thresh: for curation, noise overlap must be below this (default = 0.03)
     %   peak_snr_thresh     : for curation, peak snr must be above this (default = 1.5)
     %   curation defaults are built into the ms4alg.create_label_map processor
-    %   TODO: Cut into separate functions. Add overwrite flags and log/progress
-    %   ouput. Update help txt
+    %   TODO: Cut into separate functions. Add overwrite flags
 
     if tetResDir(end)==filesep
         tetResDir = tetResDir(1:end-1);
@@ -44,6 +49,7 @@ function out = ml_sort_on_segs(tetResDir,varargin)
     time_file = dir([fileparts(tetResDir) filesep '*timestamps*']);
     time_file = [time_file.folder filesep time_file.name];
     metrics_out = [tetResDir filesep 'metrics_raw.json'];
+    tagged_metrics_out = [tetResDir filesep 'metrics_tagged.json'];
     delete_temporary = 1;
 
     % Epoch detection parameters
@@ -168,7 +174,7 @@ function out = ml_sort_on_segs(tetResDir,varargin)
     fprintf('\n------\nAdding curation tags. Curation Parameters:\n\tfiring_rate_thresh: %f\n\tisolation_thresh\n\t %f\n\tnoise_overlap_thresh: %f\n\tpeak_snr_thresh: %f\n------\n',firing_rate_thresh,isolation_thresh,noise_overlap_thresh,peak_snr_thresh);
     pName = 'pyms.add_curation_tags';
     curInputs = struct('metrics',metrics_out);
-    curOutputs = struct('metrics_tagged',[tetResDir filesep 'metrics_tagged.json']);
+    curOutputs = struct('metrics_tagged',tagged_metrics_out);
     ml_run_process(pName,curInputs,curOutputs,curParams);
 
 

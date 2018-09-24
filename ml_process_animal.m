@@ -18,7 +18,6 @@ function ml_process_animal(animID,rawDir,varargin)
     %   dataDir     : path to direct folder for animal. default = rawDir/../animID_direct
     %   sessionNums : array of days to process. default = [] processes all days in rawDir
     %   tet_list    : array of tetrodes to cluster. default = [] processes all tetrodes available
-    %   keep_intermediates  : whether to keep the intermediate mda files corresponding to pre.mda.prv and filt.mda.prv, the intermediate files are stored on the local disk in the mountainlab tmp folder (defualt=0)
     %   mask_artifacts      : flag whether to mask artifacts before whitening. default = 1, but the function errors rarely on some tetrodes (no idea why yet) so you can choose not to do this process
 
     if rawDir(end)==filesep
@@ -27,7 +26,6 @@ function ml_process_animal(animID,rawDir,varargin)
     dataDir = [fileparts(rawDir) filesep animID '_direct'];
     sessionNums = [];
     tet_list = [];
-    keep_intermediates = 0;
     mask_artifacts = 1;
 
     assignVars(varargin)
@@ -38,7 +36,7 @@ function ml_process_animal(animID,rawDir,varargin)
         if strcmpi(dayDirs(k).name,'.') || strcmpi(dayDirs(k).name,'..')
             daysToProcess(k) = -1;
         else
-            pat = '(?<day>[0-9]{2})_(?<date>\d+)';
+            pat = '(?<day>[0-9]{2})_(?<date>\d*)';
             parsed = regexp(dayDirs(k).name,pat,'names');
             if isempty(parsed)
                 disp(['Could not parse directory name: ' dayDirs(k).name])

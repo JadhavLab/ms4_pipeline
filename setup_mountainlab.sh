@@ -24,9 +24,9 @@ ls -s franklab_mstaggedcuration ~/.mountainlab/packages/franklab_mstaggedcuratio
 echo "set ML_TEMPORARY_DIRECTORY in $mountainENV to be on the same drive as the data for ease of processing and space management" 
 if [ -x "$(command -v lolcat)" ] && [ -x "$(command -v figlet)" ]; then
     echo 'mountainlab setup complete' | figlet | lolcat
-    echo 'add ~/conda/lib/node_modules/mountainlab/utilities/matlab/mdaio/ to matlab path' | lolcat
+    echo 'add ~/conda/env/mlab/lib/node_modules/mountainlab/utilities/matlab/mdaio/ to matlab path' | lolcat
 else
     echo 'mountainlab setup complete'
-    echo 'add ~/conda/lib/node_modules/mountainlab/utilities/matlab/mdaio/ to matlab path'
+    echo 'add ~/conda/env/mlab/lib/node_modules/mountainlab/utilities/matlab/mdaio/ to matlab path'
 fi
 
