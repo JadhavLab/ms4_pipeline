@@ -48,7 +48,7 @@ function out = ml_sort_on_segs(tetResDir,varargin)
     param_file = [tetResDir filesep 'params.json'];
     time_file = dir([fileparts(tetResDir) filesep '*timestamps*']);
     time_file = [time_file.folder filesep time_file.name];
-    if strcmpi(time_file(end-3:end),'prv')
+    if strcmpi(time_file(end-2:end),'prv')
         time_prv =  jsondecode(fileread(time_file));
         time_file = time_prv.original_path;
     end
