@@ -68,6 +68,7 @@ Usage
 ```
     * required naming scheme is because currently the scripts parse animID, day #, date and tetrode number from file names
 * ml_process_animal(animID,rawDir) will mountainsort all days for that animal. Output will be saved to animID_direct/MountainSort in folders for each day, with subfolders for each tetrode
+    * I recommend passing this function a tet_list to restrict the tetrodes you run it on to only those you want to cluster, since MountainSort will take ~3.5GB per tetrode for 1hr of recording
 * This wrapper function will:
     * create the output directories
     * make prv links to the raw mda files and copy over the timestamps.mda (TODO: make it use a link to save space)

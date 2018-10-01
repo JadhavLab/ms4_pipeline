@@ -18,7 +18,12 @@ function ml_process_animal(animID,rawDir,varargin)
     %   dataDir     : path to direct folder for animal. default = rawDir/../animID_direct
     %   sessionNums : array of days to process. default = [] processes all days in rawDir
     %   tet_list    : array of tetrodes to cluster. default = [] processes all tetrodes available
-    %   mask_artifacts      : flag whether to mask artifacts before whitening. default = 1, but the function errors rarely on some tetrodes (no idea why yet) so you can choose not to do this process
+    %   mask_artifacts      : flag whether to mask artifacts before whitening.
+    %                         default = 1, but the function errors rarely on some tetrodes (no idea
+    %                         why yet) so you can choose not to do this process
+    %                         *Actually, currently the script is setup to automatically 
+    %                         skip artfact masking if it errors, this is mentioned at the end 
+    %                         of the log file. so Check Your Logs!
 
     if rawDir(end)==filesep
         rawDir = rawDir(1:end-1);
