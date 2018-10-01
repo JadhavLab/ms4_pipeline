@@ -73,6 +73,7 @@ function ml_process_animal(animID,rawDir,varargin)
         disp('restricting to tetrodes:')
         disp(tet_list')
     end
+    pause(10)
 
     % Run mda_util, returns list of tetrode results directories
     resDirs = mda_util(dayDirs,'tet_list',tet_list,'dataDir',dataDir);

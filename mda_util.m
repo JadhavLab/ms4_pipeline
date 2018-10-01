@@ -86,7 +86,7 @@ function out = mda_util(dayDirs,varargin)
         for l=1:numel(mdaFiles)
             % if its the timestamps file, copy it to the resDir 
             if ~isempty(strfind(mdaFiles(l).name,'timestamps'))
-                create_prv([mdaFiles(l).folder filesep mdaFiles(l).name],[resDir mdaFiles(l).name]);
+                create_prv([mdaFiles(l).folder filesep mdaFiles(l).name],[resDir mdaFiles(l).name '.prv']);
                 continue;
             end
             parsedF = regexp(mdaFiles(l).name,pat2,'names');
