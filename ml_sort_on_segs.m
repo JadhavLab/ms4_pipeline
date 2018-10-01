@@ -48,6 +48,10 @@ function out = ml_sort_on_segs(tetResDir,varargin)
     param_file = [tetResDir filesep 'params.json'];
     time_file = dir([fileparts(tetResDir) filesep '*timestamps*']);
     time_file = [time_file.folder filesep time_file.name];
+    if strcmpi(time_file(end-3:end),'prv')
+        time_prv =  jsondecode(fileread(time_file));
+        time_file = time_prv.original_path;
+    end
     metrics_out = [tetResDir filesep 'metrics_raw.json'];
     tagged_metrics_out = [tetResDir filesep 'metrics_tagged.json'];
     delete_temporary = 1;
