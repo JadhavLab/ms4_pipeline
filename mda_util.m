@@ -70,6 +70,9 @@ function out = mda_util(dayDirs,varargin)
             topDir = fileparts(fileparts(dd));
         end
         mdaDir = dir([dd filesep '*.mda']);
+        if isempty(mdaDir)
+            error('No MDA directory found in %s. Please run exportmda and try again.',dd)
+        end
         pat = '(?<anim>[A-Z]+[0-9]+)_(?<day>[0-9]{2})_(?<date>[0-9]+)_*(?<epoch>[0-9]*)(?<epoch_name>\w*).mda';
         parsed = regexp(mdaDir.name,pat,'names');
         if ~dataDirOverride
@@ -83,7 +86,7 @@ function out = mda_util(dayDirs,varargin)
         for l=1:numel(mdaFiles)
             % if its the timestamps file, copy it to the resDir 
             if ~isempty(strfind(mdaFiles(l).name,'timestamps'))
-                copyfile([mdaFiles(l).folder filesep mdaFiles(l).name],[resDir mdaFiles(l).name]);
+                create_prv([mdaFiles(l).folder filesep mdaFiles(l).name],[resDir mdaFiles(l).name]);
                 continue;
             end
             parsedF = regexp(mdaFiles(l).name,pat2,'names');
