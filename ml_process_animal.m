@@ -55,6 +55,7 @@ function ml_process_animal(animID,rawDir,varargin)
     dayDirs(daysToProcess<0) = [];
     daysToProcess(daysToProcess<0) = [];
 
+    % TODO: fix this, not restricting days properly
     if ~isempty(sessionNums)
         missing = setdiff(sessionNums,daysToProcess);
         [rmvDays,rmv] = setdiff(daysToProcess,sessionNums);
@@ -88,6 +89,7 @@ function ml_process_animal(animID,rawDir,varargin)
         fprintf('\n\n------\nBeginning analysis of %s\nDate: %s\n\nBandpass Filtering, Masking out artifacts and Whitening...\n------\n',rD,datestr(datetime('Now'))); 
         
         % filter mask and whiten
+        % TODO: Add check to make sure there is data in the mda files, maybe up in mda_util
         [out,maskErrors(k)] = ml_filter_mask_whiten(rD,'mask_artifacts',mask_artifacts);
         % returns path to pre.mda.prv file
 

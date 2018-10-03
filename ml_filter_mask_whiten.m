@@ -19,6 +19,11 @@ function [out,maskingError] = ml_filter_mask_whiten(tetResDir,varargin)
     threshold = 5; % for artifact masking
     chunk_size = 2000; % for artifact masking
 
+    filt_out = [tetResDir filesep 'filt.mda'];
+    white_out = [tetResDir filesep 'pre.mda'];
+    raw_timeseries = [tetResDir filesep 'raw.mda.prv'];
+    overwrite = 0;
+
     assignVars(varargin)
 
     maskingError = 0;
@@ -37,37 +42,45 @@ function [out,maskingError] = ml_filter_mask_whiten(tetResDir,varargin)
         maskParams = setParams(maskParams,params);
     end
 
-    % Bandpass filter
-    fprintf('\n------\nFiltering, Maksing and Whitening for  %s\n\nBandpass Filtering. Parameters:\n\tfreq_min: %g\n\tfreq_max: %g\n\tsamplerate: %g\n------\n',tetResDir,freq_min,freq_max,samplerate)
-    pName = 'ephys.bandpass_filter';
-    inFile.timeseries = [tetResDir filesep 'raw.mda.prv'];
-    outFile.timeseries_out = [tetResDir filesep 'filt.mda'];
-    console_out = ml_run_process(pName,inFile,outFile,filtParams);
+    if exist(filt_out,'file') && ~overwrite
+        fprintf('\n------\nFiltered data already exists. Skipping filtering and masking...\n------\n')
+    else
+        % Bandpass filter
+        fprintf('\n------\nFiltering, Maksing and Whitening for  %s\n\nBandpass Filtering. Parameters:\n\tfreq_min: %g\n\tfreq_max: %g\n\tsamplerate: %g\n------\n',tetResDir,freq_min,freq_max,samplerate)
+        pName = 'ephys.bandpass_filter';
+        inFile.timeseries = raw_timeseries;
+        outFile.timeseries_out = filt_out;
+        console_out = ml_run_process(pName,inFile,outFile,filtParams);
 
-    % Mask Artifacts
-    if mask_artifacts
-        try
-            fprintf('\n------\nMasking Artifacts. Parameters:\n\tthreshold: %g\n\tchunk_size: %i\n------\n',threshold,chunk_size);
-            pName = 'ephys.mask_out_artifacts';
-            inFile.timeseries = [tetResDir filesep 'filt.mda'];
-            outFile.timeseries_out = [tetResDir filesep 'filt_tmp.mda'];
-            console_out = ml_run_process(pName,inFile,outFile,maskParams);
-            delete(inFile.timeseries)
-            movefile(outFile.timeseries_out,inFile.timeseries)
-        catch ME
-            fprintf('\n------\nMasking error: %s\n\n Skipping Masking...\n------\n',ME.message)
-            maskingError = 1;
+        % Mask Artifacts
+        if mask_artifacts
+            try
+                fprintf('\n------\nMasking Artifacts. Parameters:\n\tthreshold: %g\n\tchunk_size: %i\n------\n',threshold,chunk_size);
+                pName = 'ephys.mask_out_artifacts';
+                inFile.timeseries = filt_out;
+                outFile.timeseries_out = [tetResDir filesep 'filt_tmp.mda'];
+                console_out = ml_run_process(pName,inFile,outFile,maskParams);
+                delete(inFile.timeseries)
+                movefile(outFile.timeseries_out,inFile.timeseries)
+            catch ME
+                fprintf('\n------\nMasking error: %s\n\n Skipping Masking...\n------\n',ME.message)
+                maskingError = 1;
+            end
+
         end
-
     end
-
-    % Whiten
-    fprintf('\n------\nWhitening Signal\n------\n');
-    pName = 'ephys.whiten';
-    inFile.timeseries = [tetResDir filesep 'filt.mda'];
-    outFile.timeseries_out = [tetResDir filesep 'pre.mda'];
-    console_out = ml_run_process(pName,inFile,outFile);
-    out = outFile.timeseries_out;
+    if exist(white_out,'file') && ~overwrite
+        fprintf('\n------\nWhitened data already exists. Skipping whitening...\n------\n')
+        out = white_out;
+    else
+        % Whiten
+        fprintf('\n------\nWhitening Signal\n------\n');
+        pName = 'ephys.whiten';
+        inFile.timeseries = filt_out;
+        outFile.timeseries_out = white_out;
+        console_out = ml_run_process(pName,inFile,outFile);
+        out = outFile.timeseries_out;
+    end
 
 function newParams = setParams(old,new)
     FNs = fieldnames(old);
