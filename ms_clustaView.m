@@ -137,7 +137,6 @@ cidx = find(strcmpi(fd.paramnames,'Cluster'));
 if ~isempty(cidx)
     clusts = sort(unique(fd.params(:,cidx)));
     tblDat = num2cell([clusts logical(zeros(size(clusts,1),1))]);
-    tblDat(:,2) = cellfun(@logical,tblDat(:,2),'UniformOutput',false);
 else
     tblDat = {1,logical(0)};
 end
@@ -183,15 +182,15 @@ xdat = clustDat.params(:,xidx);
 
 cidx = find(strcmpi(paramnames,'Cluster'));
 if ~isempty(cidx)
-    cdat = clustDat.params(:,cidx);
+    cdat = clustDat.pamas(:,cidx);
 else
     cdat = ones(size(ydat,1),1);
 end
 tblDat = get(handles.clust_list,'Data');
 colors = getappdata(handles.figure1,'plotColors');
-cla(handles.plot_ax)
+cla(plot_ax)
 hold(handles.plot_ax,'on')
-for k=1:size(tblDat,1)
+for k=1:size(tbldat,1)
     clust = tblDat{k,1};
     if tblDat{k,2}
         continue;
