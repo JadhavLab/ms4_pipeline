@@ -140,6 +140,9 @@ if ~isempty(cidx)
 else
     tblDat = {1,logical(0)};
 end
+for k=1:size(tblDat,1)
+    tblDat{k,2} = logical(tblDat{k,2});
+end
 set(handles.clust_list,'Data',tblDat)
 colors = lines(size(tblDat,1));
 setappdata(handles.figure1,'plotColors',colors)
@@ -182,15 +185,15 @@ xdat = clustDat.params(:,xidx);
 
 cidx = find(strcmpi(paramnames,'Cluster'));
 if ~isempty(cidx)
-    cdat = clustDat.pamas(:,cidx);
+    cdat = clustDat.params(:,cidx);
 else
     cdat = ones(size(ydat,1),1);
 end
 tblDat = get(handles.clust_list,'Data');
 colors = getappdata(handles.figure1,'plotColors');
-cla(plot_ax)
+cla(handles.plot_ax)
 hold(handles.plot_ax,'on')
-for k=1:size(tbldat,1)
+for k=1:size(tblDat,1)
     clust = tblDat{k,1};
     if tblDat{k,2}
         continue;
