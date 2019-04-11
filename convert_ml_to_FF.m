@@ -13,6 +13,10 @@ function out = convert_ml_to_FF(animID,resDir,sessionNum,varargin)
         error('No timestamps file found in %s',resDir);
     end
     timeFile = [timeFile.folder filesep timeFile.name];
+    if strcmp(timeFile(end-2:end),'prv')
+        tmp = jsondecode(fileread(timeFile));
+        timeFile = tmp.original_path;
+    end
     timeDat = readmda(timeFile);
     saveFile = sprintf('%s%s%sspikes%02i.mat',resDir,filesep,animID,sessionNum);
     if exist(saveFile,'file') && ~overwrite
