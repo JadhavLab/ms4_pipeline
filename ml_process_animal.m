@@ -110,10 +110,10 @@ function ml_process_animal(animID,rawDir,varargin)
         %    delete([tmpDir '*.mda'])
         %end
         %
-        % Create matclust params file
-        fprintf('\n\n------\nCreating Matclust Params and Waves files\n------\n')
-        out3 = generateMatclustFromMountainSort(rD);
-        fprintf('\n\n------\nFile creation done. outputs saved at:\n    %s\n    %s\n------\n',out3{1},out3{2})
+        % Create matclust params file: Not Needed, only for trying to view spikes in matclust 5/8/19
+        %fprintf('\n\n------\nCreating Matclust Params and Waves files\n------\n')
+        %out3 = generateMatclustFromMountainSort(rD);
+        %fprintf('\n\n------\nFile creation done. outputs saved at:\n    %s\n    %s\n------\n',out3{1},out3{2})
 
         if maskErrors(k)
             fprintf('\n######\nMasking error for this day. Masking Artifacts skipped. Spikes may be noisy\n######\n')

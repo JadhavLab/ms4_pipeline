@@ -1,4 +1,12 @@
 function out = convert_ml_to_FF(animID,resDir,sessionNum,varargin)
+    % Convert mountainsort curated spikes to filter framework spikes files
+    % animID : animal ID
+    % resDir : mountainlab results directory for a single day
+    % sessionNum: number of day
+    % NAME-VALUE Pairs:
+    % samplerate : sampling rate in Hz, default 30000
+    % min_epoch_break : minumum recording time break to classify an epoch, 1 sec default
+    % overwrite : 1 or 0 (default), whether to overwrite an existing spikes file
 
     samplerate = 30000;
     min_epoch_break=1;
@@ -48,8 +56,13 @@ function out = convert_ml_to_FF(animID,resDir,sessionNum,varargin)
     for k=1:numel(tetDirs)
         tD = [tetDirs(k).folder filesep tetDirs(k).name];
         tetNum = tet_nums(k);
-        metFile = [tD filesep 'metrics_raw.json'];
-        fireFile = [tD filesep 'firings_raw.mda'];
+        metFile = [tD filesep 'metrics_tagged.json'];
+        fireFile = [tD filesep 'firing.curated..mda'];
+        if ~isfile(fireFile)
+            fprintf('No curated firings file found for tetrode %i. Skipping...\n',tetNum);
+            continue;
+        end
+
         metDat = jsondecode(fileread(metFile));
         metDat = metDat.clusters;
         fireDat = readmda(fireFile); % Rows are # Channels, timestamp (starting @ 0), cluster #
@@ -77,17 +90,19 @@ function out = convert_ml_to_FF(animID,resDir,sessionNum,varargin)
                 fields = 'time x y dir not_used amplitude(highest variance channel) posindex n_detection_channels';
                 descript = 'spike data from MountainSort 4 (MountainLab-JS)';
                 meanrate = mD.firing_rate;
-                peak_amplitude = mD.peak_amplitude;
-                refractory_violation_1msec = mD.refractory_violation_1msec;
+                peak_amplitude = mD.peak_amp;
+                % refractory_violation_1msec = mD.refractory_violation_1msec; % No longer found in curated mda, possibly due to version update
                 dat(:,1) = fireTimes(idx)'/samplerate;
                 dat(:,7) = fireDat(1,idx)';
+                tag = metDat(m).tags; 
+                if any(strcmp(tag,'accepted'))
+                    tag = tag{strcmp(tag,'accepted')};
+                end
                 spikes{sessionNum}{l}{tetNum}{m} = struct('data',dat,'meanrate',meanrate,...
                     'descript',descript,'fields',fields,...
                     'timerange',[t1 t2]/samplerate,...
-                    'tag','',...
-                    'peak_amplitude',peak_amplitude,...
-                    'refractory_violation_1msec',...
-                    refractory_violation_1msec);
+                    'tag',tag,...
+                    'peak_amplitude',peak_amplitude);
             end
         end
     end
