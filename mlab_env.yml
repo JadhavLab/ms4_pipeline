@@ -57,7 +57,7 @@ dependencies:
   - libxcb=1.13
   - libxml2=2.9.8
   - lzo=2.10
-  - matplotlib=2.2.3
+  - matplotlib
   - mistune=0.8.3
   - mkl=2019.0
   - mkl_fft=1.0.6
@@ -67,7 +67,7 @@ dependencies:
   - ml_ms4alg=0.1.7
   - ml_pyms=0.0.1
   - mountainlab=0.15.0
-  - mountainlab_pytools=0.7.0
+  - mountainlab_pytools
   - ncurses=6.1
   - nodejs=10.4.1
   - numexpr=2.6.6
