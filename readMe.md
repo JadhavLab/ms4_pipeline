@@ -4,84 +4,14 @@ Mountainlab-JS for JadhavLab
 Repository for Jadhav Lab code for the use of MountainSort-JS
 % Last Updated: 2022 - Jacob Olson
 
-%% Last install - Fresh Ubuntu 20.04 with python 3.10.4
+Install Instructions are in INSTALL_INSTRUCTIONS.txt
 
-
-%%%%%%   Manual MountainSort/Lab Install and Setup %%%%%%
-% Clone this repo (Jadhav ms4 pipeline)
-% In a terminal, cd into this repo
-------
-%% Download and install miniconda %%
-```shell
-        wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3.sh
-        bash miniconda3.sh -bp ~/conda
-        echo ". ~/conda/etc/profile.d/conda.sh" >> ~/.bashrc
-```
-
-%% Setup a conda environment and install mountainlab and all processors %%
-```shell
-        conda create --name mlab
-        conda activate mlab
-        conda install conda
-        conda update conda
-        conda config --add channels conda-forge
-        conda install -c flatiron -c conda-forge mountainlab mountainlab_pytools ml_ephys ml_ms4alg ml_ms3 ml_pyms
-        conda install -c flatiron -c conda-forge qt-mountainview
-```
-
-%% Create configuration file for mountainlab %%
-```shell
-        mountainENV=~/conda/envs/mlab/etc/mountainlab/mountainlab.env
-        touch $mountainENV
-```
-
-% Now you can set the temporary directory path to be on the same drive as your data
-% Also add the `~/.mountainlab/packages/` to the mountainlab package search path
-% Just modify and add these lines to the `mountainlab.env` file you created:
-    % `ML_TEMPORARY_DIRECTORY='/path/to/data/drive/tmp/mountainlab-tmp'`
-    % `ML_ADDITIONAL_PACKAGE_SEARCH_DIRECTORIES='~/.mountainlab/packages'`
-```shell
-
-echo "ML_ADDITIONAL_PACKAGE_SEARCH_DIRECTORIES='~/.mountainlab/packages'" >> $mountainENV
-```
 
 %%%%%%%%%%%% All Instructions Below Here Preceded Olson 2022 Edits %%%%%%%%%%%%
 
 TODO: convert franklab script to convert mountainsort output to FF files (spikes & cellinfo)
 TODO: launcher script to simplify qt-mountainview launch
 
-Automatic Setup (9-24-18)
-------
-* Clone this repo
-* In a terminal, cd into this repo
-* run  setup_mountainlab.sh
-    * `. setup_mountainlab.sh`
-* open  `~/conda/env/mlab/etc/mountainlab/mountainlab.env` in text editor of your choice
-* add `ML_TEMPORARY_DIRECTORY='/path/to/data/drive/tmp/mountainlab-tmp'`
-* To your matlab path, add `~/conda/env/mlab/lib/node_modules/mountainlab/utilities/matlab/mdaio/`
-
-
-Manual Setup
-
-
-* Add `~/conda/env/mlab/lib/node_modules/mountainlab/utilities/matlab/mdaio/` to your matlab path
-
-* Get additional processors from franklab for drift tracking and tagged curation
-    * Actually copy or symlink the folders from this repository into `~/.mountainlab/packages/`
-    * [FrankLab Tagged Curation](https://bitbucket.org/franklab/franklab_mstaggedcuration/src/master/)
-    * [FrankLab Drift Tracking](https://bitbucket.org/franklab/franklab_msdrift/src/master/)
-    * These should be cloned into `~/.mountainlab/packages/`
-
-* Create configuration file for mountainlab
-    * `touch ~/conda/env/mlab/etc/mountainlab/mountainlab.env`
-    * Now you can set the temporary directory path to be on the same drive as your data
-    * Also add the `~/.mountainlab/packages/` to the mountainlab package search path
-    * Just modify and add these lines to the `mountainlab.env` file you created:
-        * `ML_TEMPORARY_DIRECTORY='/path/to/data/drive/tmp/mountainlab-tmp'`
-        * `ML_ADDITIONAL_PACKAGE_SEARCH_DIRECTORIES='~/.mountainlab/packages'`
-
-### Updates 9-23-18
-The franklab msdrift and mstaggedcuration packages will throw errors as is due to changes in package locations in the new mountainlab-js. So instead copy the `franklab_mstaggedcuration` and `franklab_msdrift` folder from this repository into `~/.mountainlab/packages/`.
 
 Usage
 ------
