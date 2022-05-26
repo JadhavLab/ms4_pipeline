@@ -1,0 +1,6 @@
+[submodule "franklab_msdrift_master"]
+	path = franklab_msdrift_master
+	url = https://bitbucket.org/franklab/franklab_msdrift/src/master/
+[submodule "franklab_mstaggedcuration_master"]
+	path = franklab_mstaggedcuration_master
+	url = https://bitbucket.org/franklab/franklab_mstaggedcuration/src/master/
