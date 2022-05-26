@@ -2,6 +2,50 @@ Mountainlab-JS for JadhavLab
 ======
 
 Repository for Jadhav Lab code for the use of MountainSort-JS
+% Last Updated: 2022 - Jacob Olson
+
+%% Last install - Fresh Ubuntu 20.04 with python 3.10.4
+
+
+%%%%%%   Manual MountainSort/Lab Install and Setup %%%%%%
+% Clone this repo (Jadhav ms4 pipeline)
+% In a terminal, cd into this repo
+------
+%% Download and install miniconda %%
+```shell
+        wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3.sh
+        bash miniconda3.sh -bp ~/conda
+        echo ". ~/conda/etc/profile.d/conda.sh" >> ~/.bashrc
+```
+
+%% Setup a conda environment and install mountainlab and all processors %%
+```shell
+        conda create --name mlab
+        conda activate mlab
+        conda install conda
+        conda update conda
+        conda config --add channels conda-forge
+        conda install -c flatiron -c conda-forge mountainlab mountainlab_pytools ml_ephys ml_ms4alg ml_ms3 ml_pyms
+        conda install -c flatiron -c conda-forge qt-mountainview
+```
+
+%% Create configuration file for mountainlab %%
+```shell
+        mountainENV=~/conda/envs/mlab/etc/mountainlab/mountainlab.env
+        touch $mountainENV
+```
+
+% Now you can set the temporary directory path to be on the same drive as your data
+% Also add the `~/.mountainlab/packages/` to the mountainlab package search path
+% Just modify and add these lines to the `mountainlab.env` file you created:
+    % `ML_TEMPORARY_DIRECTORY='/path/to/data/drive/tmp/mountainlab-tmp'`
+    % `ML_ADDITIONAL_PACKAGE_SEARCH_DIRECTORIES='~/.mountainlab/packages'`
+```shell
+
+echo "ML_ADDITIONAL_PACKAGE_SEARCH_DIRECTORIES='~/.mountainlab/packages'" >> $mountainENV
+```
+
+%%%%%%%%%%%% All Instructions Below Here Preceded Olson 2022 Edits %%%%%%%%%%%%
 
 TODO: convert franklab script to convert mountainsort output to FF files (spikes & cellinfo)
 TODO: launcher script to simplify qt-mountainview launch
@@ -18,24 +62,8 @@ Automatic Setup (9-24-18)
 
 
 Manual Setup
-------
-* Download and install miniconda
 
-```shell
-        wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3.sh
-        bash miniconda3.sh -bp ~/conda
-        echo ". ~/conda/etc/profile.d/conda.sh" >> ~/.bashrc
-```
 
-* Setup a conda environment and install mountainlab and all processors
-
-```shell
-        conda create --name mlab
-        conda activate mlab
-        conda update conda
-        conda config --set max_shlvl 1
-        conda install -c flatiron -c conda-forge mountainlab mountainlab_pytools ml_ephys ml_ms4alg ml_ms3 ml_pyms qt-mountainview
-```
 * Add `~/conda/env/mlab/lib/node_modules/mountainlab/utilities/matlab/mdaio/` to your matlab path
 
 * Get additional processors from franklab for drift tracking and tagged curation
@@ -53,7 +81,7 @@ Manual Setup
         * `ML_ADDITIONAL_PACKAGE_SEARCH_DIRECTORIES='~/.mountainlab/packages'`
 
 ### Updates 9-23-18
-The franklab msdrift and mstaggedcuration packages will throw errors as is due to changes in package locations in the new mountainlab-js. So instead copy the `franklab_mstaggedcuration` and `franklab_msdrift` folder from this repository into `~/.mountainlab/packages/`. 
+The franklab msdrift and mstaggedcuration packages will throw errors as is due to changes in package locations in the new mountainlab-js. So instead copy the `franklab_mstaggedcuration` and `franklab_msdrift` folder from this repository into `~/.mountainlab/packages/`.
 
 Usage
 ------
@@ -64,7 +92,7 @@ Usage
     --> raw_data_folder (eg. RZ9)
         --> day_directories +(day#_date eg. 01_180924)
             --> Raw data files, etracted binaries, etc. +(animID_day#_date_whatever eg. RZ9_01_180924_1Sleep)
-    --> direct_folder +(animID_direct eg. RZ9_direct) 
+    --> direct_folder +(animID_direct eg. RZ9_direct)
 ```
     * required naming scheme is because currently the scripts parse animID, day #, date and tetrode number from file names
 * ml_process_animal(animID,rawDir) will mountainsort all days for that animal. Output will be saved to animID_direct/MountainSort in folders for each day, with subfolders for each tetrode
