@@ -1,14 +1,14 @@
 %% Last install - Fresh Ubuntu 20.04 with python 3.10.4
+% Caveot: while figuring this out, i installed things like pip. so not 100% this is perfect clean instructions.
 
 %%%%%%   Manual MountainSort/Lab Install and Setup %%%%%%
-% Clone this repo (Jadhav ms4 pipeline)
-% In a terminal, cd into this repo
 ------
 %% Download and install miniconda %%
 ```shell
         wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3.sh
         bash miniconda3.sh -bp ~/conda
         echo ". ~/conda/etc/profile.d/conda.sh" >> ~/.bashrc
+        conda update conda
 ```
 
 %% Setup a conda environment and install mountainlab and all processors %%
@@ -20,11 +20,18 @@
         conda config --add channels conda-forge
         conda install -c flatiron -c conda-forge mountainlab mountainlab_pytools ml_ephys ml_ms4alg ml_ms3 ml_pyms
         conda install -c flatiron -c conda-forge qt-mountainview
+        conda install nodejs -c conda-forge --repodata-fn=repodata.json
+```
+
+% Clone this repo (Jadhav ms4 pipeline)
+% In a terminal, cd into this repo
+```shell
+  conda env create -f mlab_env.yml
 ```
 
 %% Create configuration file for mountainlab %%
+mountainENV=~/conda/envs/mlab/etc/mountainlab/mountainlab.env
 ```shell
-        mountainENV=~/conda/envs/mlab/etc/mountainlab/mountainlab.env
         touch $mountainENV
 ```
 
@@ -33,26 +40,38 @@
 % Just modify and add these lines to the `mountainlab.env` file you created:
     % `ML_TEMPORARY_DIRECTORY='/path/to/data/drive/tmp/mountainlab-tmp'`
     % `ML_ADDITIONAL_PACKAGE_SEARCH_DIRECTORIES='~/.mountainlab/packages'`
+    e.g.
 ```shell
-echo "ML_TEMPORARY_DIRECTORY='~/media/jmolson/SpeedData/mtnLabTmp" >> $mountainENV
+echo "ML_TEMPORARY_DIRECTORY='/media/jmolson/SpeedData/mtnLabTmp" >> $mountainENV
 echo "ML_ADDITIONAL_PACKAGE_SEARCH_DIRECTORIES='~/.mountainlab/packages'" >> $mountainENV
 ```
 
 %% Get additional processors from franklab for drift tracking and tagged curation %%
     % Symlink the folders from this repository into `~/.mountainlab/packages/`
+    % Note, there are small differences from our repo to current Frank lab versions, but I don't know how to get their current version to work, so I am sticking with Jadhav Lab repo.
     % [FrankLab Tagged Curation](https://bitbucket.org/franklab/franklab_mstaggedcuration/src/master/)
     % [FrankLab Drift Tracking](https://bitbucket.org/franklab/franklab_msdrift/src/master/)
 ```shell
     mkdir ~/.mountainlab
     mkdir ~/.mountainlab/packages
     mtnPackLoc=~/.mountainlab/packages
-ml
     alias qwd='printf "%q\n" "$(pwd)"'
     qwd
-    (copy output of qwd into the path to this repo placeholder below)
-    ln -s /PATH/TO/THIS/REPO/franklab_mstaggedcuration_master $mtnPackLoc/franklab_mstaggedcuration
-    ln -s /PATH/TO/THIS/REPO/franklab_msdrift_master $mtnPackLoc/franklab_msdrift
 ```
+    (copy output of qwd into the path to this repo placeholder below)
+    ln -s /PATH/TO/THIS/REPO/franklab_mstaggedcuration $mtnPackLoc/franklab_mstaggedcuration
+    ln -s /PATH/TO/THIS/REPO/franklab_msdrift $mtnPackLoc/franklab_msdrift
+    e.g.
+```shell
+    ln -s /media/jmolson/4TBData/Code\ Repos/JadhavBitbucketRepos/ms4_pipeline/franklab_mstaggedcuration $mtnPackLoc/franklab_mstaggedcuration
+    ln -s /media/jmolson/4TBData/Code\ Repos/JadhavBitbucketRepos/ms4_pipeline/franklab_msdrift $mtnPackLoc/franklab_msdrift
+```
+
+%% Test
+ml-config
+ml-list-processors
+
+
 
 %% Set Matlab Path %%
     % Add `~/conda/env/mlab/lib/node_modules/mountainlab/utilities/matlab/mdaio/` to your matlab path
@@ -76,17 +95,23 @@ SyntaxError: Unexpected token function
     at run (bootstrap_node.js:394:7)
     at startup (bootstrap_node.js:160:9)
 ```
-%% Solution:
-% https://github.com/nvm-sh/nvm#installing-and-updating - will give a wget line like the one below, but with the most recent version.
-Go to https://nodejs.org/en/about/releases/, find the newest long term support version. (18 in 2022)
-```shell
-    wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-```
-% In a terminal, cd back into this repo (Jadhav ms4 pipeline)
-% Check that the nvm installed
-% install your chosen version of nodeJS
-``shell
-    nvm -v
-    nvm install 18
-    node -v
-```
+
+%%% Compiler Issue
+Getting a GOMP_parallel error with ml_list_processors?
+
+then do:
+https://mountainsort.readthedocs.io/en/latest/installation_advanced.html
+do prereqs and compilation.
+I extracted the code and compiled in download folder - this is all temporary.
+conda create --name msTMP
+conda activate msTMP
+conda install python=3.6
+
+go to
+./packages/pyms/basic
+copy:
+bandpass_filter_cpp.cpython-36m-x86_64-linux-gnu.so
+replace the file with the same name in:
+~/conda/envs/mlab/lib/python3.6/site-packages
+
+Should fix the problem!
