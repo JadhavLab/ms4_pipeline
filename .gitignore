@@ -3,4 +3,6 @@
 *.DS_Store
 *.m~
 .ipynb_checkpoints*
+*.cpython-36.pyc
 *.pyc
+*.asv
