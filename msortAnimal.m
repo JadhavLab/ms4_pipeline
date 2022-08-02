@@ -1,4 +1,4 @@
-function msort_animal(Parameters)
+function msortAnimal(Parameters)
 
 % Based off of code from Roshan Nanu and Ryan Young (I believe).
 % Author: Jacob Olson
@@ -27,7 +27,7 @@ animalID = 'SL09';
 
 % Defaults
 % pat = '(?<day>[0-9]{2})_(?<date>\d*)'; % rec folder name pattern
-pat = [animalID,'_D(?<day>[0-9]{2})']; % My default pattern
+pattern = [animalID,'_D(?<day>[0-9]{2})']; % My default pattern
 dataDir = [fileparts(rawDir) filesep animID '_direct'];
 sessionNums = [];
 tet_list = [];
@@ -70,6 +70,8 @@ if rawDir(end)==filesep
     rawDir = rawDir(1:end-1);
 end
 
+disp('Processing raw data with mountain lab. Processing:')
+disp(dayDirs')
 
 
 

@@ -1,4 +1,4 @@
-function createMtnSortDir(trodeFileName, destFolder, params, ignoreTimestamps)
+function createMtnSortDir(trodeFileName, destFolder, params, addTimestamps)
 % Assumes there is a timestamps.mda in the same folder as the trode
 
 
@@ -17,7 +17,7 @@ fclose(fid);
 destFile = [destFolder filesep 'raw.mda.prv'];
 create_prv(trodeFileName,destFile);
 
-if ~ignoreTimestamps
+if addTimestamps
     % add timestamps to parent folder if not already there
     origDir = pwd;
     destParentFolder = fileparts(destFolder);
