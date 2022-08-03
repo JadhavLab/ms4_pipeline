@@ -1,4 +1,4 @@
-function msortAnimal(Parameters)
+function msortAnimal(animalID, animalDir, varargin)
 
 % Based off of code from Roshan Nanu and Ryan Young (I believe).
 % Author: Jacob Olson
@@ -16,29 +16,15 @@ function msortAnimal(Parameters)
 % Continutous time data is assumed to be organized in trodes in the
 % following file structure:
 % SomePath/animalID/day/animalID_day.mda/ntX.mda
-% animal id and day can take any form. X is a the trode number.
+% animal id and day (day is a set of rec(s) that have been extracted 
+% together) can take any form. X is the trode number.
 % There must also be a timestamps.mda in the same folder.
 
-% Data will be placed into the folder % SomePath/animalID/day/MTNSORD_DIR
+% Data will by default be placed into the folder 
+% SomePath/animalID/day/MTNSORT_DIR
 
-animalFolderPath = '';
-animalID = 'SL09';
-
-
-% Defaults
-% pat = '(?<day>[0-9]{2})_(?<date>\d*)'; % rec folder name pattern
-pattern = [animalID,'_D(?<day>[0-9]{2})']; % My default pattern
-dataDir = [fileparts(rawDir) filesep animID '_direct'];
-sessionNums = [];
-tet_list = [];
-mask_artifacts = 1;
-
-% Overwrites defaults with any parameters passed in.
-assignVars(varargin)
-%Maybe use inputparser instead.
-
-% Constants
-MTNSORT_DIR = 'Mountainsort';
+%% Constants
+MTNSORT_DIR = 'MountainSort';
 
 SPIKE_CLIPS_FILE_NAME = 'clipsForPlexon.mda';
 TIMESTAMP_FILE_SUFFIX = '.timestamps.mda';
@@ -48,48 +34,44 @@ FQ_SAMPLE = 30000;
 PRE_TIME_MS = 0.4;
 POST_TIME_MS = 1.2;
 
+%% Parse Inputs
+p = inputParser;
+p.StructExpand = false;
+validStr = @(x) isstring(x) || ischar(x);
+addRequired(p,'animalID');
+addRequired(p,'animalDir');
+addOptional(p,'recList',[])
+addOptional(p,'trodeList',[])
+addOptional(p,'recPattern','(?<animalID>[A-Z]+[0-9]+)_D(?<recID>[0-9]{2})',validStr);
+addOptional(p,'trodePattern','(?<animalID>[A-Z]+[0-9]+)_D(?<day>[0-9]{2}).nt(?<tet>[0-9]+).mda',validStr);
+addParameter(p,'mtnSortFolder',MTNSORT_DIR);
+addParameter(p,'maskArtifacts',true);
+addParameter(p,'cuttingParams',struct('samplerate',30000));
 
+parse(p,animalID, animalDir,varargin{:});
+animalID = p.Results.animalID;
+animalDir = p.Results.animalDir;
+mtnSortFolder = p.Results.mtnSortFolder;
+recPattern = p.Results.recPattern;
+recList = p.Results.recList;
+trodePattern = p.Results.trodePattern;
+trodeList = p.Results.trodeList;
 
-animalRawDataDir = [animalFolderPath, animalID, filesep()];
-mdaList = dir([animalRawDataDir,'**',filesep(),'*.mda']);
-tetMdas = mdaList(arrayfun(@(x) contains(x.name,'nt'),mdaList));
-mdaListSplit = arrayfun(@(x) strsplit(x.name,'.'),tetMdas,'UniformOutput',false);
-
-[~, dayDirName, ~] = fileparts(tetMdas(1).folder);
-
-ntNums = cellfun(@(x) x{2},mdaListSplit,'UniformOutput',false);
-tetIDs = cellfun(@(x) str2double(x(3:end)),ntNums);
-[tetList, tetListInds] = sort(tetIDs);
-%         tetList = tetListManual;
-directDir = [DATA_DIR, animalID, '_direct',filesep()];
-
-ml_process_animal(animalID,animalRawDataDir,'tet_list',tetList,'dataDir',directDir);
-
-% Trim trailing slash if there
-if rawDir(end)==filesep
-    rawDir = rawDir(1:end-1);
+if animalDir(end)==filesep
+    animalDir = animalDir(1:end-1);
+end
+if mtnSortFolder(end)==filesep
+    mtnSortFolder = mtnSortFolder(1:end-1);
 end
 
-disp('Processing raw data with mountain lab. Processing:')
-disp(dayDirs')
-
-
-
-for k=1:numel(resDirs)
-    
-    msortTrode(resDirs{k});
-
+recFolders = findRecFolders(animalDir,recPattern,recList);
+disp('Processing raw data with mountain lab. Processing:');
+disp(recFolders.recID');
+for iRec = 1:numel(recFolders)
+    parentFolder = [recFolders(iRec).folder,filesep,recFolders(iRec).name];
+    recMdaDir = [parentFolder, filesep, recFolders(iRec).name,'.mda'];
+    recMtnSortFolder = [parentFolder, filesep, mtnSortFolder];
+    msortRec(recMdaDir, recMtnSortFolder, varargin);
 end
-fprintf('Completed automated clustering!\n')
-
-
-
-
-
-
-
-
-
-
 
 end
